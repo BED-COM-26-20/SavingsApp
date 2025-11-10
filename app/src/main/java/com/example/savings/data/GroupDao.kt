@@ -13,4 +13,7 @@ interface GroupDao {
 
     @Query("SELECT * FROM groups ORDER BY name ASC")
     fun getAllGroups(): Flow<List<Group>>
+
+    @Query("DELETE FROM groups")
+    suspend fun clear()
 }

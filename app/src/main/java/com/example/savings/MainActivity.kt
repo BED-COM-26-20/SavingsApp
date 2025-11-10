@@ -6,6 +6,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -19,19 +20,24 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.savings.data.SavingsDatabase
 import com.example.savings.data.models.TransactionType
+import com.example.savings.ui.auth.ForgotPasswordScreen
 import com.example.savings.ui.auth.LoginScreen
 import com.example.savings.ui.auth.RegistrationScreen
 import com.example.savings.ui.group.CreateGroupScreen
+import com.example.savings.ui.group.GroupDetailsScreen
 import com.example.savings.ui.group.GroupSelectionScreen
 import com.example.savings.ui.group.GroupViewModel
 import com.example.savings.ui.group.GroupViewModelFactory
-import com.example.savings.ui.home.HomeScreen
+import com.example.savings.ui.landing.LandingScreen
 import com.example.savings.ui.members.AddMemberScreen
 import com.example.savings.ui.members.MemberViewModel
 import com.example.savings.ui.members.MemberViewModelFactory
 import com.example.savings.ui.members.MembersScreen
 import com.example.savings.ui.members.details.MemberDetailsScreen
 import com.example.savings.ui.notifications.NotificationsScreen
+import com.example.savings.ui.profile.EditProfileScreen
+import com.example.savings.ui.profile.ProfileViewModel
+import com.example.savings.ui.profile.ProfileViewModelFactory
 import com.example.savings.ui.reports.ReportsScreen
 import com.example.savings.ui.theme.SavingsTheme
 import com.example.savings.ui.transactions.AddTransactionScreen
@@ -51,20 +57,24 @@ class MainActivity : ComponentActivity() {
         val memberViewModel: MemberViewModel by viewModels { MemberViewModelFactory(memberDao) }
         val transactionViewModel: TransactionViewModel by viewModels { TransactionViewModelFactory(transactionDao) }
         val groupViewModel: GroupViewModel by viewModels { GroupViewModelFactory(groupDao) }
+        val profileViewModel: ProfileViewModel by viewModels { ProfileViewModelFactory() }
 
         setContent {
-            SavingsTheme {
-                Scaffold {
-                    innerPadding ->
-                    val navController = rememberNavController()
-                    var selectedGroupId by remember { mutableStateOf<Int?>(null) }
-                    val groups by groupViewModel.groups.collectAsState()
+            var isDarkMode by remember { mutableStateOf(false) }
 
-                    NavHost(navController = navController, startDestination = "login", modifier = Modifier.padding(innerPadding)) {
+            SavingsTheme(darkTheme = isDarkMode) {
+                Scaffold { innerPadding ->
+                    val navController = rememberNavController()
+                    
+                    NavHost(navController = navController, startDestination = "landing", modifier = Modifier.padding(innerPadding)) {
+                        composable("landing") {
+                            LandingScreen(onGetStarted = { navController.navigate("login") })
+                        }
                         composable("login") {
                             LoginScreen(
                                 onLogin = { navController.navigate("groupSelection") { popUpTo("login") { inclusive = true } } },
-                                onRegister = { navController.navigate("register") }
+                                onRegister = { navController.navigate("register") },
+                                onForgotPassword = { navController.navigate("forgotPassword") }
                             )
                         }
                         composable("register") {
@@ -72,15 +82,21 @@ class MainActivity : ComponentActivity() {
                                 onRegister = { navController.navigate("groupSelection") { popUpTo("login") { inclusive = true } } }
                             )
                         }
+                        composable("forgotPassword") {
+                            ForgotPasswordScreen(onNavigateBack = { navController.popBackStack() }, onResetPassword = {})
+                        }
                         composable("groupSelection") {
+                            val groups by groupViewModel.groups.collectAsState(initial = emptyList())
                             GroupSelectionScreen(
                                 groups = groups,
                                 onGroupSelected = { groupId ->
-                                    selectedGroupId = groupId
-                                    navController.navigate("home")
+                                    navController.navigate("groupDetails/$groupId")
                                 },
                                 onCreateGroup = { navController.navigate("createGroup") },
-                                onLogout = { navController.navigate("login") { popUpTo("groupSelection") { inclusive = true } } }
+                                onLogout = { /* TODO: Implement logout logic with data clearing */
+                                    navController.navigate("login") { popUpTo("groupSelection") { inclusive = true } }
+                                },
+                                onNotificationsClicked = { navController.navigate("notifications") }
                             )
                         }
                         composable("createGroup") {
@@ -89,50 +105,63 @@ class MainActivity : ComponentActivity() {
                                 navController.popBackStack()
                             }, onNavigateBack = { navController.popBackStack() })
                         }
-                        composable("home") {
-                            val groupId = selectedGroupId ?: return@composable
-                            val members by memberViewModel.getMembersForGroup(groupId).collectAsState(initial = emptyList())
-                            val allTransactions by transactionViewModel.getAllTransactionsForGroup(groupId).collectAsState(initial = emptyList())
+                        composable(
+                            route = "groupDetails/{groupId}",
+                            arguments = listOf(navArgument("groupId") { type = NavType.IntType })
+                        ) { backStackEntry ->
+                            val groupId = backStackEntry.arguments?.getInt("groupId") ?: -1
+                            val groups by groupViewModel.groups.collectAsState(initial = emptyList())
                             val group = groups.find { it.id == groupId }
-
-                            val totalSavings = allTransactions.filter { it.type == TransactionType.DEPOSIT }.sumOf { it.amount }
-                            val totalLoans = allTransactions.filter { it.type == TransactionType.LOAN }.sumOf { it.amount }
-
-                            if (group != null) {
-                                HomeScreen(
-                                    group = group.copy(
-                                        totalSavings = totalSavings,
-                                        totalLoans = totalLoans,
-                                        numberOfMembers = members.size
-                                    ),
-                                    onMembersClicked = { navController.navigate("members") },
-                                    onTransactionsClicked = { navController.navigate("transactions") },
-                                    onReportsClicked = { navController.navigate("reports") },
-                                    onNotificationsClicked = { navController.navigate("notifications") },
-                                    onLogout = {
-                                        navController.navigate("login") {
-                                            popUpTo("home") {
-                                                inclusive = true
-                                            }
-                                        }
-                                    },
-                                    onNavigateBack = TODO()
-                                )
-                            }
+                            
+                            GroupDetailsScreen(
+                                group = group,
+                                onNavigateBack = { navController.popBackStack() },
+                                onMembersClicked = { navController.navigate("members/$groupId") },
+                                onTransactionsClicked = { navController.navigate("transactions/$groupId") },
+                                onReportsClicked = { navController.navigate("reports/$groupId") }
+                            )
                         }
-                        composable("members") {
-                            val groupId = selectedGroupId ?: return@composable
+                        composable(
+                            route = "members/{groupId}",
+                            arguments = listOf(navArgument("groupId") { type = NavType.IntType })
+                        ) { backStackEntry ->
+                            val groupId = backStackEntry.arguments?.getInt("groupId") ?: -1
                             val members by memberViewModel.getMembersForGroup(groupId).collectAsState(initial = emptyList())
-
                             MembersScreen(
                                 members = members,
                                 onMemberClicked = { member -> navController.navigate("memberDetails/${member.id}") },
-                                onAddMemberClicked = { navController.navigate("addMember") },
+                                onAddMemberClicked = { navController.navigate("addMember/$groupId") },
                                 onNavigateBack = { navController.popBackStack() }
                             )
                         }
-                        composable("addMember") {
-                            val groupId = selectedGroupId ?: return@composable
+                        composable(
+                            route = "transactions/{groupId}",
+                            arguments = listOf(navArgument("groupId") { type = NavType.IntType })
+                        ) { backStackEntry ->
+                            val groupId = backStackEntry.arguments?.getInt("groupId") ?: -1
+                            val transactions by transactionViewModel.getAllTransactionsForGroup(groupId).collectAsState(initial = emptyList())
+                            TransactionsScreen(transactions = transactions, onNavigateBack = { navController.popBackStack() })
+                        }
+                        composable(
+                            route = "reports/{groupId}",
+                            arguments = listOf(navArgument("groupId") { type = NavType.IntType })
+                        ) { backStackEntry ->
+                            val groupId = backStackEntry.arguments?.getInt("groupId") ?: -1
+                            val transactions by transactionViewModel.getAllTransactionsForGroup(groupId).collectAsState(initial = emptyList())
+                            val members by memberViewModel.getMembersForGroup(groupId).collectAsState(initial = emptyList())
+                            ReportsScreen(
+                                transactions = transactions,
+                                members = members,
+                                onNavigateBack = { navController.popBackStack() },
+                                onExport = { /* TODO */ },
+                                onShare = { /* TODO */ }
+                            )
+                        }
+                        composable(
+                            route = "addMember/{groupId}",
+                            arguments = listOf(navArgument("groupId") { type = NavType.IntType })
+                        ) { backStackEntry ->
+                            val groupId = backStackEntry.arguments?.getInt("groupId") ?: -1
                             AddMemberScreen(
                                 onNavigateBack = { navController.popBackStack() },
                                 onSaveMember = { name, phone ->
@@ -145,22 +174,22 @@ class MainActivity : ComponentActivity() {
                             route = "memberDetails/{memberId}",
                             arguments = listOf(navArgument("memberId") { type = NavType.IntType })
                         ) { backStackEntry ->
-                            val groupId = selectedGroupId ?: return@composable
                             val memberId = backStackEntry.arguments?.getInt("memberId") ?: -1
-                            val members by memberViewModel.getMembersForGroup(groupId).collectAsState(initial = emptyList())
-                            val member = members.find { it.id == memberId }
+                            val member by memberViewModel.getMemberById(memberId).collectAsState(initial = null)
 
                             if (member != null) {
                                 val memberTransactions by transactionViewModel.getTransactionsForMember(memberId).collectAsState(initial = emptyList())
-                                val memberTotalSavings = memberTransactions.filter { it.type == TransactionType.DEPOSIT }.sumOf { it.amount }
-                                val memberTotalLoans = memberTransactions.filter { it.type == TransactionType.LOAN }.sumOf { it.amount }
+                                val savingsTransactions = remember(memberTransactions) { memberTransactions.filter { it.type == TransactionType.DEPOSIT } }
+                                val loanTransactions = remember(memberTransactions) { memberTransactions.filter { it.type == TransactionType.LOAN || it.type == TransactionType.LOAN_REPAYMENT } }
 
                                 MemberDetailsScreen(
-                                    member = member.copy(totalSavings = memberTotalSavings, totalLoan = memberTotalLoans),
+                                    member = member!!,
+                                    savingsTransactions = savingsTransactions,
+                                    loanTransactions = loanTransactions,
                                     onNavigateBack = { navController.popBackStack() },
-                                    onAddDeposit = { navController.navigate("addTransaction/DEPOSIT/${member.id}") },
-                                    onAddLoan = { navController.navigate("addTransaction/LOAN/${member.id}") },
-                                    onAddPayment = { navController.navigate("addTransaction/LOAN_REPAYMENT/${member.id}") }
+                                    onAddTransaction = { transactionType ->
+                                        navController.navigate("addTransaction/$transactionType/$memberId")
+                                    }
                                 )
                             }
                         }
@@ -168,12 +197,10 @@ class MainActivity : ComponentActivity() {
                             route = "addTransaction/{type}/{memberId}",
                             arguments = listOf(
                                 navArgument("type") { type = NavType.StringType },
-                                navArgument("memberId") { type = NavType.IntType },
+                                navArgument("memberId") { type = NavType.IntType }
                             )
                         ) { backStackEntry ->
-                            val groupId = selectedGroupId ?: return@composable
                             val memberId = backStackEntry.arguments?.getInt("memberId")
-                            val members by memberViewModel.getMembersForGroup(groupId).collectAsState(initial = emptyList())
                             val typeString = backStackEntry.arguments?.getString("type")
 
                             val transactionType = try {
@@ -181,41 +208,22 @@ class MainActivity : ComponentActivity() {
                             } catch (_: IllegalArgumentException) {
                                 null
                             }
-                            val member = members.find { it.id == memberId }
+                            val member by memberViewModel.getMemberById(memberId!!).collectAsState(initial = null)
 
-                            if (member != null && transactionType != null && memberId != null) {
+                             if (memberId != null && transactionType != null && member != null) {
                                 AddTransactionScreen(
-                                    memberName = member.name,
+                                    memberName = member!!.name,
                                     transactionType = transactionType.name,
                                     onNavigateBack = { navController.popBackStack() },
                                     onSave = { amount, date, type ->
-                                        transactionViewModel.addTransaction(memberId, amount, type, date, "Transaction for ${member.name}")
+                                        transactionViewModel.addTransaction(memberId, amount, type, date, "Transaction for ${member!!.name}")
                                         navController.popBackStack()
                                     }
                                 )
                             }
                         }
-                        composable("transactions") {
-                            val groupId = selectedGroupId ?: return@composable
-                            val allTransactions by transactionViewModel.getAllTransactionsForGroup(groupId).collectAsState(initial = emptyList())
-                            TransactionsScreen(transactions = allTransactions, onNavigateBack = { navController.popBackStack() })
-                        }
-                        composable("reports") {
-                            val groupId = selectedGroupId ?: return@composable
-                            val allTransactions by transactionViewModel.getAllTransactionsForGroup(groupId).collectAsState(initial = emptyList())
-                            ReportsScreen(
-                                transactions = allTransactions,
-                                onNavigateBack = { navController.popBackStack() },
-                                onExport = { /* Handle Export */ },
-                                onShare = { /* Handle Share */ }
-                            )
-                        }
                         composable("notifications") {
-                            NotificationsScreen(
-                                onNavigateBack = { navController.popBackStack() },
-                                onMarkAsRead = { /* Handle Mark As Read */ },
-                                onDelete = { /* Handle Delete */ }
-                            )
+                            NotificationsScreen(onNavigateBack = { navController.popBackStack() }, onMarkAsRead = {}, onDelete = {})
                         }
                     }
                 }

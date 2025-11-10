@@ -4,6 +4,7 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -12,6 +13,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Download
@@ -29,25 +31,46 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.example.savings.data.models.Member
 import com.example.savings.data.models.Transaction
 import com.example.savings.data.models.TransactionType
+
+data class TopSaver(val rank: Int, val name: String, val amount: Double)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ReportsScreen(
     transactions: List<Transaction>,
+    members: List<Member>,
     onNavigateBack: () -> Unit,
     onExport: () -> Unit,
     onShare: () -> Unit
 ) {
     val totalSavings = transactions.filter { it.type == TransactionType.DEPOSIT }.sumOf { it.amount }
     val totalLoans = transactions.filter { it.type == TransactionType.LOAN }.sumOf { it.amount }
+
+    val topSavers = remember(transactions, members) {
+        members
+            .map { member ->
+                val memberSavings = transactions
+                    .filter { it.memberId == member.id && it.type == TransactionType.DEPOSIT }
+                    .sumOf { it.amount }
+                member.name to memberSavings
+            }
+            .filter { it.second > 0 }
+            .sortedByDescending { it.second }
+            .take(3)
+            .mapIndexed { index, pair ->
+                TopSaver(rank = index + 1, name = pair.first, amount = pair.second)
+            }
+    }
 
     Scaffold(
         topBar = {
@@ -61,27 +84,57 @@ fun ReportsScreen(
                 )
             )
         }
-    ) {
-        Column(modifier = Modifier.padding(it).fillMaxSize().background(MaterialTheme.colorScheme.background).padding(16.dp)) {
+    ) { paddingValues ->
+        Column(modifier = Modifier.padding(paddingValues).fillMaxSize().background(MaterialTheme.colorScheme.background).padding(16.dp)) {
             Card(modifier = Modifier.fillMaxWidth(), elevation = CardDefaults.cardElevation(4.dp)) {
                 Column(modifier = Modifier.padding(16.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                     Text("Financial Overview", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
                     Spacer(modifier = Modifier.height(16.dp))
-                    PieChart(totalSavings, totalLoans)
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Text("Total Savings: MWK $totalSavings", style = MaterialTheme.typography.bodyLarge)
-                    Text("Total Loans: MWK $totalLoans", style = MaterialTheme.typography.bodyLarge)
+                    BoxWithConstraints {
+                        val isSmallScreen = maxWidth < 600.dp
+                        if (isSmallScreen) {
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                PieChart(totalSavings, totalLoans, modifier = Modifier.size(150.dp))
+                                Spacer(modifier = Modifier.height(16.dp))
+                                PieChartLegend(
+                                    savings = totalSavings,
+                                    loans = totalLoans,
+                                    savingsColor = MaterialTheme.colorScheme.primary,
+                                    loansColor = MaterialTheme.colorScheme.secondary
+                                )
+                            }
+                        } else {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                PieChart(totalSavings, totalLoans, modifier = Modifier.size(200.dp))
+                                Spacer(modifier = Modifier.width(32.dp))
+                                PieChartLegend(
+                                    savings = totalSavings,
+                                    loans = totalLoans,
+                                    savingsColor = MaterialTheme.colorScheme.primary,
+                                    loansColor = MaterialTheme.colorScheme.secondary
+                                )
+                            }
+                        }
+                    }
                 }
             }
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Placeholder for Top Savers
             Card(modifier = Modifier.fillMaxWidth(), elevation = CardDefaults.cardElevation(4.dp)) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     Text("Top Savers", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
                     Spacer(modifier = Modifier.height(8.dp))
-                    TopSaverItem(rank = 1, name = "Mary Banda", amount = "MWK 50,000")
-                    TopSaverItem(rank = 2, name = "John Phiri", amount = "MWK 45,000")
+                    if (topSavers.isEmpty()) {
+                        Text("No savings data available to rank top savers.", style = MaterialTheme.typography.bodyLarge, color = Color.Gray)
+                    } else {
+                        topSavers.forEach { saver ->
+                            TopSaverItem(
+                                rank = saver.rank,
+                                name = saver.name,
+                                amount = "MWK ${String.format("%,.2f", saver.amount)}"
+                            )
+                        }
+                    }
                 }
             }
 
@@ -112,7 +165,7 @@ fun PieChart(savings: Double, loans: Double, modifier: Modifier = Modifier) {
     val primaryColor = MaterialTheme.colorScheme.primary
     val secondaryColor = MaterialTheme.colorScheme.secondary
 
-    Box(modifier = modifier.size(150.dp), contentAlignment = Alignment.Center) {
+    Box(modifier = modifier, contentAlignment = Alignment.Center) {
         if (savings + loans == 0.0) {
             Text("No data available")
         } else {
@@ -139,6 +192,25 @@ fun PieChart(savings: Double, loans: Double, modifier: Modifier = Modifier) {
         }
     }
 }
+
+@Composable
+fun PieChartLegend(savings: Double, loans: Double, savingsColor: Color, loansColor: Color) {
+    Column {
+        LegendItem(color = savingsColor, text = "Savings - MWK ${String.format("%,.2f", savings)}")
+        Spacer(modifier = Modifier.height(8.dp))
+        LegendItem(color = loansColor, text = "Loans - MWK ${String.format("%,.2f", loans)}")
+    }
+}
+
+@Composable
+fun LegendItem(color: Color, text: String) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Box(modifier = Modifier.size(16.dp).background(color))
+        Spacer(modifier = Modifier.width(8.dp))
+        Text(text, style = MaterialTheme.typography.bodyLarge)
+    }
+}
+
 
 @Composable
 fun TopSaverItem(rank: Int, name: String, amount: String) {

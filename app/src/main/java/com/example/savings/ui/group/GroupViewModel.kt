@@ -23,4 +23,10 @@ class GroupViewModel(private val groupDao: GroupDao) : ViewModel() {
             groupDao.insert(Group(name = groupName))
         }
     }
+
+    fun onLogout() {
+        viewModelScope.launch {
+            groupDao.clear()
+        }
+    }
 }

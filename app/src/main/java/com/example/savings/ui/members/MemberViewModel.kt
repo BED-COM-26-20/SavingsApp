@@ -13,6 +13,14 @@ class MemberViewModel(private val memberDao: MemberDao) : ViewModel() {
         return memberDao.getMembersForGroup(groupId)
     }
 
+    fun getMemberById(memberId: Int): Flow<Member> {
+        return memberDao.getMemberById(memberId)
+    }
+
+    fun getMemberCountForGroup(groupId: Int): Flow<Int> {
+        return memberDao.getMemberCountForGroup(groupId)
+    }
+
     fun addMember(name: String, phone: String, groupId: Int) {
         viewModelScope.launch {
             memberDao.insert(Member(name = name, phone = phone, groupId = groupId))

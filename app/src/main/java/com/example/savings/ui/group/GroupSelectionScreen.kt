@@ -14,9 +14,11 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.GroupWork
+import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -36,21 +38,14 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.example.savings.data.models.Group
 
-/**
- * Displays a list of available savings groups for the user to select,
- * or provides an option to create a new one.
- *
- * @param groups The list of groups to display.
- * @param onGroupSelected Lambda for when a user selects a group from the list.
- * @param onCreateGroup Lambda for when the user taps the 'Create Group' button.
- */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun GroupSelectionScreen(
     groups: List<Group>,
     onGroupSelected: (Int) -> Unit,
     onCreateGroup: () -> Unit,
-    onLogout: () -> Unit
+    onLogout: () -> Unit,
+    onNotificationsClicked: () -> Unit
 ) {
     Scaffold(
         topBar = {
@@ -59,7 +54,15 @@ fun GroupSelectionScreen(
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.primary,
                     titleContentColor = MaterialTheme.colorScheme.onPrimary
-                )
+                ),
+                actions = {
+                    IconButton(onClick = onNotificationsClicked) {
+                        Icon(Icons.Default.Notifications, contentDescription = "Notifications", tint = MaterialTheme.colorScheme.onPrimary)
+                    }
+                    IconButton(onClick = onLogout) {
+                        Icon(Icons.AutoMirrored.Filled.ExitToApp, contentDescription = "Logout", tint = MaterialTheme.colorScheme.onPrimary)
+                    }
+                }
             )
         },
         floatingActionButton = {

@@ -1,15 +1,26 @@
 package com.example.savings.ui.landing
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.AccountBalanceWallet
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 
 @Composable
@@ -17,17 +28,41 @@ fun LandingScreen(onGetStarted: () -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp),
-        verticalArrangement = Arrangement.Center,
+            .background(MaterialTheme.colorScheme.background)
+            .padding(32.dp),
+        verticalArrangement = Arrangement.SpaceAround,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text(
-            text = "Welcome to Savings!",
-            style = MaterialTheme.typography.headlineMedium,
-            modifier = Modifier.padding(bottom = 32.dp)
-        )
-        Button(onClick = onGetStarted) {
-            Text("Get Started")
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Icon(
+                imageVector = Icons.Outlined.AccountBalanceWallet,
+                contentDescription = "Savings App Icon",
+                modifier = Modifier.size(120.dp),
+                tint = MaterialTheme.colorScheme.primary
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+            Text(
+                text = "Welcome to Savings",
+                style = MaterialTheme.typography.headlineLarge,
+                textAlign = TextAlign.Center
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = "Your personal finance companion to track your group savings and achieve your financial goals.",
+                style = MaterialTheme.typography.bodyLarge,
+                textAlign = TextAlign.Center,
+                color = Color.Gray
+
+            )
+        }
+        Button(
+            onClick = onGetStarted,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(50.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+        ) {
+            Text("Get Started", style = MaterialTheme.typography.titleMedium)
         }
     }
 }

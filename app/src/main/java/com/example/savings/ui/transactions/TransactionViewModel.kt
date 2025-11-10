@@ -18,6 +18,22 @@ class TransactionViewModel(private val transactionDao: TransactionDao) : ViewMod
         return transactionDao.getAllTransactionsForGroup(groupId)
     }
 
+    fun getGroupTotalSavings(groupId: Int): Flow<Double?> {
+        return transactionDao.getGroupTotal(groupId, TransactionType.DEPOSIT)
+    }
+
+    fun getGroupTotalLoans(groupId: Int): Flow<Double?> {
+        return transactionDao.getGroupTotal(groupId, TransactionType.LOAN)
+    }
+
+    fun getMemberTotalSavings(memberId: Int): Flow<Double?> {
+        return transactionDao.getMemberTotal(memberId, TransactionType.DEPOSIT)
+    }
+
+    fun getMemberTotalLoans(memberId: Int): Flow<Double?> {
+        return transactionDao.getMemberTotal(memberId, TransactionType.LOAN)
+    }
+
     fun addTransaction(
         memberId: Int,
         amount: Double,

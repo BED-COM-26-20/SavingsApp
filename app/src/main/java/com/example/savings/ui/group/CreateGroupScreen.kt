@@ -34,7 +34,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 
@@ -49,7 +48,7 @@ fun CreateGroupScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Create Group") },
+                title = { Text("Create New Group") },
                 navigationIcon = { IconButton(onClick = onNavigateBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back") } },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.primary,
@@ -96,6 +95,7 @@ fun CreateGroupScreen(
                         onClick = { onCreateGroup(groupName) },
                         modifier = Modifier.fillMaxWidth().height(50.dp),
                         enabled = groupName.isNotBlank()
+
                     ) {
                         Icon(Icons.Default.Save, contentDescription = null)
                         Spacer(modifier = Modifier.padding(horizontal = 4.dp))

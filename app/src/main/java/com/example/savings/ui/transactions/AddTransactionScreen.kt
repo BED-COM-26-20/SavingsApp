@@ -1,6 +1,7 @@
 package com.example.savings.ui.transactions
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -9,16 +10,13 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material.icons.filled.MonetizationOn
-import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Save
-import androidx.compose.material.icons.filled.SyncAlt
 import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.DropdownMenuItem
@@ -42,7 +40,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.example.savings.data.models.TransactionType
 import java.text.SimpleDateFormat
@@ -66,7 +64,7 @@ fun AddTransactionScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Add Transaction") },
+                title = { Text("Add Transaction for $memberName") },
                 navigationIcon = { IconButton(onClick = onNavigateBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back") } },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.primary,
@@ -76,46 +74,32 @@ fun AddTransactionScreen(
             )
         }
     ) {
-        Column(modifier = Modifier.padding(it).fillMaxSize().background(MaterialTheme.colorScheme.background).padding(16.dp)) {
-            Card(elevation = CardDefaults.cardElevation(4.dp), modifier = Modifier.fillMaxWidth()) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Text("Transaction Details", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    OutlinedTextField(
-                        value = memberName,
-                        onValueChange = {},
-                        readOnly = true,
-                        label = { Text("Member") },
-                        leadingIcon = { Icon(Icons.Default.Person, contentDescription = null) },
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    TransactionTypeDropdown(initialType = selectedTransactionType, onTypeSelected = { selectedTransactionType = it })
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    OutlinedTextField(
-                        value = amount,
-                        onValueChange = { amount = it },
-                        label = { Text("Amount: MWK") },
-                        leadingIcon = { Icon(Icons.Default.MonetizationOn, contentDescription = null) },
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    OutlinedTextField(
-                        value = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(Date(selectedDate)),
-                        onValueChange = {},
-                        readOnly = true,
-                        label = { Text("Date") },
-                        leadingIcon = { Icon(Icons.Default.CalendarToday, contentDescription = null) },
-                        modifier = Modifier.fillMaxWidth(),
-                        trailingIcon = { TextButton(onClick = { showDatePicker = true }) { Text("Select") } }
-                    )
-                }
-            }
+        Column(
+            modifier = Modifier
+                .padding(it)
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.background)
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            TransactionTypeDropdown(initialType = selectedTransactionType, onTypeSelected = { selectedTransactionType = it })
+            OutlinedTextField(
+                value = amount,
+                onValueChange = { amount = it },
+                label = { Text("Amount (MWK)") },
+                leadingIcon = { Icon(Icons.Default.MonetizationOn, contentDescription = null) },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                modifier = Modifier.fillMaxWidth()
+            )
+            OutlinedTextField(
+                value = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(Date(selectedDate)),
+                onValueChange = {},
+                readOnly = true,
+                label = { Text("Date") },
+                leadingIcon = { Icon(Icons.Default.CalendarToday, contentDescription = null) },
+                modifier = Modifier.fillMaxWidth(),
+                trailingIcon = { TextButton(onClick = { showDatePicker = true }) { Text("Select") } }
+            )
 
             if (showDatePicker) {
                 DatePickerDialog(
@@ -138,7 +122,9 @@ fun AddTransactionScreen(
 
             Button(
                 onClick = { onSave(amount.toDoubleOrNull() ?: 0.0, selectedDate, selectedTransactionType) },
-                modifier = Modifier.fillMaxWidth().height(50.dp)
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(50.dp)
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(Icons.Filled.Save, contentDescription = "Save Transaction")
@@ -162,7 +148,6 @@ fun TransactionTypeDropdown(initialType: TransactionType, onTypeSelected: (Trans
             onValueChange = {},
             readOnly = true,
             label = { Text("Transaction Type") },
-            leadingIcon = { Icon(Icons.Default.SyncAlt, contentDescription = null) },
             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
             modifier = Modifier.menuAnchor().fillMaxWidth()
         )

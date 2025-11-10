@@ -15,6 +15,15 @@ interface MemberDao {
     @Query("SELECT * FROM members WHERE groupId = :groupId ORDER BY name ASC")
     fun getMembersForGroup(groupId: Int): Flow<List<Member>>
 
+    @Query("SELECT * FROM members WHERE id = :memberId")
+    fun getMemberById(memberId: Int): Flow<Member>
+
+    @Query("SELECT COUNT(*) FROM members WHERE groupId = :groupId")
+    fun getMemberCountForGroup(groupId: Int): Flow<Int>
+
     @Delete
     suspend fun delete(member: Member)
+
+    @Query("DELETE FROM members")
+    suspend fun clear()
 }
