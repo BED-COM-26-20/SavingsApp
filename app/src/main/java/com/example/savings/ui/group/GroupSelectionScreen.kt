@@ -45,7 +45,8 @@ fun GroupSelectionScreen(
     onGroupSelected: (Int) -> Unit,
     onCreateGroup: () -> Unit,
     onLogout: () -> Unit,
-    onNotificationsClicked: () -> Unit
+    onNotificationsClicked: () -> Unit,
+    onEditGroup: (Int) -> Unit
 ) {
     Scaffold(
         topBar = {
@@ -88,7 +89,7 @@ fun GroupSelectionScreen(
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     items(groups) { group ->
-                        GroupItem(group = group, onClick = { onGroupSelected(group.id) })
+                        GroupItem(group = group, onClick = { onGroupSelected(group.id) }, onEdit = { onEditGroup(group.id) })
                     }
                 }
             }
@@ -128,7 +129,7 @@ private fun EmptyState() {
 }
 
 @Composable
-private fun GroupItem(group: Group, onClick: () -> Unit) {
+private fun GroupItem(group: Group, onClick: () -> Unit, onEdit: () -> Unit) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -149,7 +150,7 @@ private fun GroupItem(group: Group, onClick: () -> Unit) {
             Spacer(modifier = Modifier.padding(horizontal = 8.dp))
             Text(group.name, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
             Spacer(modifier = Modifier.weight(1f))
-            IconButton(onClick = { /* TODO: Implement Edit Group */ }) {
+            IconButton(onClick = onEdit) {
                 Icon(Icons.Default.Edit, contentDescription = "Edit Group", tint = MaterialTheme.colorScheme.secondary)
             }
         }

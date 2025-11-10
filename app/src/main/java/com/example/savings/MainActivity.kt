@@ -35,6 +35,7 @@ import com.example.savings.ui.auth.ForgotPasswordScreen
 import com.example.savings.ui.auth.LoginScreen
 import com.example.savings.ui.auth.RegistrationScreen
 import com.example.savings.ui.group.CreateGroupScreen
+import com.example.savings.ui.group.EditGroupScreen
 import com.example.savings.ui.group.GroupDetailsScreen
 import com.example.savings.ui.group.GroupSelectionScreen
 import com.example.savings.ui.group.GroupViewModel
@@ -145,12 +146,13 @@ class MainActivity : ComponentActivity() {
                                         popUpTo(AppScreen.Home.route) { inclusive = true }
                                     }
                                 },
-                                onNotificationsClicked = { navController.navigate("notifications") }
+                                onNotificationsClicked = { navController.navigate("notifications") },
+                                onEditGroup = { groupId -> navController.navigate("editGroup/$groupId") }
                             )
                         }
                         composable(AppScreen.Profile.route) {
                             EditProfileScreen(
-                                onNavigateBack = { navController.popBackStack() },
+                                onNavigateBack = { navController.navigate(AppScreen.Home.route) },
                                 onToggleDarkMode = { isDarkMode = it },
                                 isDarkMode = isDarkMode,
                                 onLogout = {
@@ -169,6 +171,24 @@ class MainActivity : ComponentActivity() {
                                 groupViewModel.createGroup(groupName)
                                 navController.popBackStack()
                             }, onNavigateBack = { navController.popBackStack() })
+                        }
+                        composable(
+                            route = "editGroup/{groupId}",
+                            arguments = listOf(navArgument("groupId") { type = NavType.IntType })
+                        ) { backStackEntry ->
+                            val groupId = backStackEntry.arguments?.getInt("groupId") ?: -1
+                            val group = groupViewModel.groups.collectAsState(initial = emptyList()).value.find { it.id == groupId }
+
+                            if (group != null) {
+                                EditGroupScreen(
+                                    groupName = group.name,
+                                    onNavigateBack = { navController.popBackStack() },
+                                    onSave = { newName ->
+                                        groupViewModel.updateGroup(group.copy(name = newName))
+                                        navController.popBackStack()
+                                    }
+                                )
+                            }
                         }
                         composable(
                             route = "groupDetails/{groupId}",
