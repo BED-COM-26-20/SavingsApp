@@ -32,4 +32,10 @@ class MemberViewModel(private val memberDao: MemberDao) : ViewModel() {
             memberDao.delete(member)
         }
     }
+
+    fun onLogout() {
+        viewModelScope.launch {
+            memberDao.clear()
+        }
+    }
 }

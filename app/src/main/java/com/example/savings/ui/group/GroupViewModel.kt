@@ -24,6 +24,12 @@ class GroupViewModel(private val groupDao: GroupDao) : ViewModel() {
         }
     }
 
+    fun updateGroup(group: Group) {
+        viewModelScope.launch {
+            groupDao.update(group)
+        }
+    }
+
     fun onLogout() {
         viewModelScope.launch {
             groupDao.clear()

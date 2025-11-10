@@ -5,7 +5,14 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material3.Icon
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -13,9 +20,13 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.navigation.NavDestination.Companion.hierarchy
+import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.savings.data.SavingsDatabase
@@ -45,6 +56,11 @@ import com.example.savings.ui.transactions.TransactionViewModel
 import com.example.savings.ui.transactions.TransactionViewModelFactory
 import com.example.savings.ui.transactions.TransactionsScreen
 
+sealed class AppScreen(val route: String, val label: String, val icon: ImageVector) {
+    object Home : AppScreen("home", "Home", Icons.Default.Home)
+    object Profile : AppScreen("profile", "Profile", Icons.Default.Person)
+}
+
 class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -63,40 +79,89 @@ class MainActivity : ComponentActivity() {
             var isDarkMode by remember { mutableStateOf(false) }
 
             SavingsTheme(darkTheme = isDarkMode) {
-                Scaffold { innerPadding ->
-                    val navController = rememberNavController()
-                    
+                val navController = rememberNavController()
+                Scaffold(
+                    bottomBar = {
+                        val navBackStackEntry by navController.currentBackStackEntryAsState()
+                        val currentDestination = navBackStackEntry?.destination
+                        val showBottomBar = currentDestination?.route in listOf(AppScreen.Home.route, AppScreen.Profile.route)
+
+                        if (showBottomBar) {
+                            NavigationBar {
+                                val items = listOf(AppScreen.Home, AppScreen.Profile)
+                                items.forEach { screen ->
+                                    val selected = currentDestination?.hierarchy?.any { it.route == screen.route } == true
+                                    NavigationBarItem(
+                                        selected = selected,
+                                        onClick = { 
+                                            navController.navigate(screen.route) {
+                                                popUpTo(navController.graph.findStartDestination().id) {
+                                                    saveState = true
+                                                }
+                                                launchSingleTop = true
+                                                restoreState = true
+                                            }
+                                        },
+                                        icon = { Icon(screen.icon, contentDescription = screen.label) },
+                                        label = { Text(screen.label) }
+                                    )
+                                }
+                            }
+                        }
+                    }
+                ) {
+                    innerPadding ->
                     NavHost(navController = navController, startDestination = "landing", modifier = Modifier.padding(innerPadding)) {
                         composable("landing") {
                             LandingScreen(onGetStarted = { navController.navigate("login") })
                         }
                         composable("login") {
                             LoginScreen(
-                                onLogin = { navController.navigate("groupSelection") { popUpTo("login") { inclusive = true } } },
+                                onLogin = { navController.navigate(AppScreen.Home.route) { popUpTo("login") { inclusive = true } } },
                                 onRegister = { navController.navigate("register") },
                                 onForgotPassword = { navController.navigate("forgotPassword") }
                             )
                         }
                         composable("register") {
                             RegistrationScreen(
-                                onRegister = { navController.navigate("groupSelection") { popUpTo("login") { inclusive = true } } }
+                                onRegister = { navController.navigate(AppScreen.Home.route) { popUpTo("login") { inclusive = true } } }
                             )
                         }
                         composable("forgotPassword") {
                             ForgotPasswordScreen(onNavigateBack = { navController.popBackStack() }, onResetPassword = {})
                         }
-                        composable("groupSelection") {
-                            val groups by groupViewModel.groups.collectAsState(initial = emptyList())
+                        composable(AppScreen.Home.route) {
                             GroupSelectionScreen(
-                                groups = groups,
+                                groups = groupViewModel.groups.collectAsState(initial = emptyList()).value,
                                 onGroupSelected = { groupId ->
                                     navController.navigate("groupDetails/$groupId")
                                 },
                                 onCreateGroup = { navController.navigate("createGroup") },
-                                onLogout = { /* TODO: Implement logout logic with data clearing */
-                                    navController.navigate("login") { popUpTo("groupSelection") { inclusive = true } }
+                                onLogout = {
+                                    groupViewModel.onLogout()
+                                    memberViewModel.onLogout()
+                                    transactionViewModel.onLogout()
+                                    navController.navigate("login") {
+                                        popUpTo(AppScreen.Home.route) { inclusive = true }
+                                    }
                                 },
                                 onNotificationsClicked = { navController.navigate("notifications") }
+                            )
+                        }
+                        composable(AppScreen.Profile.route) {
+                            EditProfileScreen(
+                                onNavigateBack = { navController.popBackStack() },
+                                onToggleDarkMode = { isDarkMode = it },
+                                isDarkMode = isDarkMode,
+                                onLogout = {
+                                    groupViewModel.onLogout()
+                                    memberViewModel.onLogout()
+                                    transactionViewModel.onLogout()
+                                    navController.navigate("login") {
+                                        popUpTo(AppScreen.Profile.route) { inclusive = true }
+                                    }
+                                },
+                                profileViewModel = profileViewModel
                             )
                         }
                         composable("createGroup") {
@@ -110,11 +175,9 @@ class MainActivity : ComponentActivity() {
                             arguments = listOf(navArgument("groupId") { type = NavType.IntType })
                         ) { backStackEntry ->
                             val groupId = backStackEntry.arguments?.getInt("groupId") ?: -1
-                            val groups by groupViewModel.groups.collectAsState(initial = emptyList())
-                            val group = groups.find { it.id == groupId }
-                            
+                            val group by groupViewModel.groups.collectAsState(initial = emptyList())
                             GroupDetailsScreen(
-                                group = group,
+                                group = group.find { it.id == groupId },
                                 onNavigateBack = { navController.popBackStack() },
                                 onMembersClicked = { navController.navigate("members/$groupId") },
                                 onTransactionsClicked = { navController.navigate("transactions/$groupId") },

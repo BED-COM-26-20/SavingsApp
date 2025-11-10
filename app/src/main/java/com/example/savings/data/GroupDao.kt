@@ -3,6 +3,7 @@ package com.example.savings.data
 import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.Query
+import androidx.room.Update
 import com.example.savings.data.models.Group
 import kotlinx.coroutines.flow.Flow
 
@@ -16,4 +17,7 @@ interface GroupDao {
 
     @Query("DELETE FROM groups")
     suspend fun clear()
+
+    @Update
+    suspend fun update(group: Group)
 }

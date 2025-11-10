@@ -52,4 +52,10 @@ class TransactionViewModel(private val transactionDao: TransactionDao) : ViewMod
             transactionDao.insert(transaction)
         }
     }
+
+    fun onLogout() {
+        viewModelScope.launch {
+            transactionDao.clear()
+        }
+    }
 }
