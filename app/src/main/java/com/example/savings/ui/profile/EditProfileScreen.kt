@@ -17,6 +17,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.Close
@@ -46,7 +47,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 
@@ -149,6 +149,14 @@ fun EditProfileScreen(
                         modifier = Modifier.fillMaxWidth(),
                         isError = uiState.isPasswordMismatch
                     )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Button(
+                        onClick = { /* TODO: Implement password change logic */ },
+                        modifier = Modifier.fillMaxWidth(),
+                        enabled = !uiState.isPasswordMismatch && uiState.currentPassword.isNotEmpty() && uiState.newPassword.isNotEmpty()
+                    ) {
+                        Text("Change Password")
+                    }
                 }
             }
             Spacer(modifier = Modifier.height(16.dp))
@@ -172,25 +180,23 @@ fun EditProfileScreen(
             }
 
             Spacer(modifier = Modifier.height(32.dp))
-
-            Button(
-                onClick = { profileViewModel.onSave() },
-                modifier = Modifier.fillMaxWidth().height(50.dp),
-                enabled = !uiState.isPasswordMismatch
-            ) {
-                Text("Save Changes", style = MaterialTheme.typography.titleMedium)
-            }
-            Spacer(modifier = Modifier.height(16.dp))
-            Text(
-                text = "Logout",
-                color = MaterialTheme.colorScheme.error,
-                style = MaterialTheme.typography.titleMedium,
-                textAlign = TextAlign.Center,
+            
+            Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clickable { onLogout() }
-                    .padding(vertical = 12.dp) 
-            )
+                    .padding(vertical = 12.dp),
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(Icons.AutoMirrored.Filled.Logout, contentDescription = "Logout", tint = MaterialTheme.colorScheme.error)
+                Spacer(modifier = Modifier.size(8.dp))
+                Text(
+                    text = "Logout",
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.titleMedium,
+                )
+            }
         }
     }
 }
