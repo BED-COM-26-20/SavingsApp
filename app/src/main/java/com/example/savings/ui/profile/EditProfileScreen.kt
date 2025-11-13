@@ -12,14 +12,19 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.KeyboardArrowDown
-import androidx.compose.material.icons.filled.KeyboardArrowUp
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.ChevronRight
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.Button
-import androidx.compose.material3.Divider
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -55,7 +60,7 @@ fun EditProfileScreen(
     profileViewModel: ProfileViewModel = viewModel(factory = ProfileViewModelFactory())
 ) {
     val uiState by profileViewModel.uiState.collectAsState()
-    var expandedSection by remember { mutableStateOf<String?>(null) }
+    var editField by remember { mutableStateOf<String?>(null) }
 
     Scaffold(
         topBar = {
@@ -75,78 +80,98 @@ fun EditProfileScreen(
                 .padding(paddingValues)
                 .fillMaxSize()
                 .background(MaterialTheme.colorScheme.background)
+                .verticalScroll(rememberScrollState())
                 .padding(16.dp)
         ) {
             ProfileHeader(uiState.name)
             Spacer(modifier = Modifier.height(24.dp))
-            ProfileSection(
-                title = "Personal Information",
-                isExpanded = expandedSection == "personal",
-                onClick = { expandedSection = if (expandedSection == "personal") null else "personal" }
-            ) {
-                OutlinedTextField(
-                    value = uiState.name,
-                    onValueChange = { profileViewModel.onNameChange(it) },
-                    label = { Text("Name") },
-                    modifier = Modifier.fillMaxWidth()
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                OutlinedTextField(
-                    value = uiState.email,
-                    onValueChange = { profileViewModel.onEmailChange(it) },
-                    label = { Text("Email Address") },
-                    modifier = Modifier.fillMaxWidth()
-                )
-            }
-            ProfileSection(
-                title = "Security",
-                isExpanded = expandedSection == "security",
-                onClick = { expandedSection = if (expandedSection == "security") null else "security" }
-            ) {
-                OutlinedTextField(
-                    value = uiState.currentPassword,
-                    onValueChange = { profileViewModel.onCurrentPasswordChange(it) },
-                    label = { Text("Current Password") },
-                    visualTransformation = PasswordVisualTransformation(),
-                    modifier = Modifier.fillMaxWidth()
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                OutlinedTextField(
-                    value = uiState.newPassword,
-                    onValueChange = { profileViewModel.onNewPasswordChange(it) },
-                    label = { Text("New Password") },
-                    visualTransformation = PasswordVisualTransformation(),
-                    modifier = Modifier.fillMaxWidth()
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                OutlinedTextField(
-                    value = uiState.confirmPassword,
-                    onValueChange = { profileViewModel.onConfirmPasswordChange(it) },
-                    label = { Text("Confirm New Password") },
-                    visualTransformation = PasswordVisualTransformation(),
-                    modifier = Modifier.fillMaxWidth(),
-                    isError = uiState.isPasswordMismatch
-                )
-            }
-            ProfileSection(
-                title = "Appearance",
-                isExpanded = true, // Always expanded
-                onClick = { }
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Text("Dark Mode")
-                    Switch(
-                        checked = isDarkMode,
-                        onCheckedChange = onToggleDarkMode
+            
+            Card(elevation = CardDefaults.cardElevation(2.dp)) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Text("Personal Information", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                    Spacer(modifier = Modifier.height(16.dp))
+                    EditableField(
+                        label = "Name",
+                        value = uiState.name,
+                        isEditing = editField == "name",
+                        onEditClick = { editField = "name" },
+                        onValueChange = { profileViewModel.onNameChange(it) },
+                        onSaveClick = { editField = null; profileViewModel.onSave() },
+                        onCancelClick = { editField = null }
+                    )
+                    EditableField(
+                        label = "Email",
+                        value = uiState.email,
+                        isEditing = editField == "email",
+                        onEditClick = { editField = "email" },
+                        onValueChange = { profileViewModel.onEmailChange(it) },
+                        onSaveClick = { editField = null; profileViewModel.onSave() },
+                        onCancelClick = { editField = null }
                     )
                 }
             }
-            
-            Spacer(modifier = Modifier.weight(1f))
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Card(elevation = CardDefaults.cardElevation(2.dp)) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Text("Security", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    SecuritySwitch(title = "Two-Factor Authentication", checked = false, onCheckedChange = {})
+                    SecuritySwitch(title = "Biometric Login", checked = false, onCheckedChange = {})
+                    ClickableSecurityItem(title = "Login Activity") { /* TODO */ }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text("Change Password", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    OutlinedTextField(
+                        value = uiState.currentPassword,
+                        onValueChange = { profileViewModel.onCurrentPasswordChange(it) },
+                        label = { Text("Current Password") },
+                        visualTransformation = PasswordVisualTransformation(),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    OutlinedTextField(
+                        value = uiState.newPassword,
+                        onValueChange = { profileViewModel.onNewPasswordChange(it) },
+                        label = { Text("New Password") },
+                        visualTransformation = PasswordVisualTransformation(),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    OutlinedTextField(
+                        value = uiState.confirmPassword,
+                        onValueChange = { profileViewModel.onConfirmPasswordChange(it) },
+                        label = { Text("Confirm New Password") },
+                        visualTransformation = PasswordVisualTransformation(),
+                        modifier = Modifier.fillMaxWidth(),
+                        isError = uiState.isPasswordMismatch
+                    )
+                }
+            }
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Card(elevation = CardDefaults.cardElevation(2.dp)) {
+                 Column(modifier = Modifier.padding(16.dp)) {
+                    Text("Appearance", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text("Dark Mode")
+                        Switch(
+                            checked = isDarkMode,
+                            onCheckedChange = onToggleDarkMode
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(32.dp))
 
             Button(
                 onClick = { profileViewModel.onSave() },
@@ -172,48 +197,84 @@ fun EditProfileScreen(
 
 @Composable
 fun ProfileHeader(name: String) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth().padding(top = 16.dp)) {
         Box(
             modifier = Modifier
-                .size(80.dp)
+                .size(100.dp)
                 .clip(CircleShape)
                 .background(MaterialTheme.colorScheme.secondaryContainer),
             contentAlignment = Alignment.Center
         ) {
-            Icon(Icons.Default.Person, contentDescription = "Member", tint = MaterialTheme.colorScheme.onSecondaryContainer, modifier = Modifier.size(48.dp))
+            Icon(Icons.Default.Person, contentDescription = "Member", tint = MaterialTheme.colorScheme.onSecondaryContainer, modifier = Modifier.size(60.dp))
         }
         Spacer(modifier = Modifier.height(16.dp))
-        Text(name, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+        Text(name, style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
     }
 }
 
 @Composable
-fun ProfileSection(
-    title: String,
-    isExpanded: Boolean,
-    onClick: () -> Unit,
-    content: @Composable () -> Unit
+fun EditableField(
+    label: String,
+    value: String,
+    isEditing: Boolean,
+    onEditClick: () -> Unit,
+    onValueChange: (String) -> Unit,
+    onSaveClick: () -> Unit,
+    onCancelClick: () -> Unit
 ) {
-    Column {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable(onClick = onClick)
-                .padding(vertical = 12.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-            Icon(
-                imageVector = if (isExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
-                contentDescription = if (isExpanded) "Collapse" else "Expand"
+    if (isEditing) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            OutlinedTextField(
+                value = value,
+                onValueChange = onValueChange,
+                label = { Text(label) },
+                modifier = Modifier.weight(1f)
             )
-        }
-        if (isExpanded) {
-            Column(Modifier.padding(start = 16.dp, end = 16.dp, bottom = 16.dp)) {
-                content()
+            IconButton(onClick = onSaveClick) {
+                Icon(Icons.Default.Check, contentDescription = "Save")
+            }
+            IconButton(onClick = onCancelClick) {
+                Icon(Icons.Default.Close, contentDescription = "Cancel")
             }
         }
-        Divider()
+    } else {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(label, style = MaterialTheme.typography.labelSmall)
+                Text(value, style = MaterialTheme.typography.bodyLarge)
+            }
+            IconButton(onClick = onEditClick) {
+                Icon(Icons.Default.Edit, contentDescription = "Edit")
+            }
+        }
+    }
+}
+
+@Composable
+fun SecuritySwitch(title: String, checked: Boolean, onCheckedChange: (Boolean) -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Text(title, style = MaterialTheme.typography.bodyLarge)
+        Switch(checked = checked, onCheckedChange = onCheckedChange)
+    }
+}
+
+@Composable
+fun ClickableSecurityItem(title: String, onClick: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onClick() }
+            .padding(vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Text(title, style = MaterialTheme.typography.bodyLarge)
+        Icon(Icons.Default.ChevronRight, contentDescription = null, tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
     }
 }
