@@ -14,7 +14,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.GroupWork
@@ -44,7 +43,6 @@ fun GroupSelectionScreen(
     groups: List<Group>,
     onGroupSelected: (Int) -> Unit,
     onCreateGroup: () -> Unit,
-    onLogout: () -> Unit,
     onNotificationsClicked: () -> Unit,
     onEditGroup: (Int) -> Unit
 ) {
@@ -59,9 +57,6 @@ fun GroupSelectionScreen(
                 actions = {
                     IconButton(onClick = onNotificationsClicked) {
                         Icon(Icons.Default.Notifications, contentDescription = "Notifications", tint = MaterialTheme.colorScheme.onPrimary)
-                    }
-                    IconButton(onClick = onLogout) {
-                        Icon(Icons.AutoMirrored.Filled.ExitToApp, contentDescription = "Logout", tint = MaterialTheme.colorScheme.onPrimary)
                     }
                 }
             )

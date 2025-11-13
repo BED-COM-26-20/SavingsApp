@@ -138,14 +138,6 @@ class MainActivity : ComponentActivity() {
                                     navController.navigate("groupDetails/$groupId")
                                 },
                                 onCreateGroup = { navController.navigate("createGroup") },
-                                onLogout = {
-                                    groupViewModel.onLogout()
-                                    memberViewModel.onLogout()
-                                    transactionViewModel.onLogout()
-                                    navController.navigate("login") {
-                                        popUpTo(AppScreen.Home.route) { inclusive = true }
-                                    }
-                                },
                                 onNotificationsClicked = { navController.navigate("notifications") },
                                 onEditGroup = { groupId -> navController.navigate("editGroup/$groupId") }
                             )
