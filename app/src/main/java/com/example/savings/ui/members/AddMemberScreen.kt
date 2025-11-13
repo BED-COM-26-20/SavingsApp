@@ -60,17 +60,24 @@ fun AddMemberScreen(
             )
         }
     ) {
-        Column(modifier = Modifier.padding(it).fillMaxSize().background(MaterialTheme.colorScheme.background).padding(16.dp)) {
-            Card(elevation = CardDefaults.cardElevation(4.dp), modifier = Modifier.fillMaxWidth()) {
+        Column(
+            modifier = Modifier
+                .padding(it)
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.background)
+                .padding(16.dp)
+        ) {
+            Card(elevation = CardDefaults.cardElevation(2.dp), modifier = Modifier.fillMaxWidth()) {
                 Column(modifier = Modifier.padding(16.dp)) {
-                    Text("Member Information", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-                    Spacer(modifier = Modifier.height(16.dp))
+                    Text("Enter the new member's details below.", style = MaterialTheme.typography.bodyLarge)
+                    Spacer(modifier = Modifier.height(24.dp))
                     OutlinedTextField(
                         value = name,
                         onValueChange = { name = it },
                         label = { Text("Full Name") },
                         leadingIcon = { Icon(Icons.Default.Person, contentDescription = null) },
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true
                     )
                     Spacer(modifier = Modifier.height(16.dp))
                     OutlinedTextField(
@@ -79,7 +86,8 @@ fun AddMemberScreen(
                         label = { Text("Phone Number") },
                         leadingIcon = { Icon(Icons.Default.Phone, contentDescription = null) },
                         modifier = Modifier.fillMaxWidth(),
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone)
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
+                        singleLine = true
                     )
                 }
             }

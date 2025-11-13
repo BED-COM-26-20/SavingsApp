@@ -44,12 +44,13 @@ fun GroupSelectionScreen(
     onGroupSelected: (Int) -> Unit,
     onCreateGroup: () -> Unit,
     onNotificationsClicked: () -> Unit,
-    onEditGroup: (Int) -> Unit
+    onEditGroup: (Int) -> Unit,
+    isAdmin: Boolean
 ) {
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Your Groups") },
+                title = { Text(if (isAdmin) "Welcome, Admin!" else "Your Groups") },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.primary,
                     titleContentColor = MaterialTheme.colorScheme.onPrimary
@@ -62,11 +63,13 @@ fun GroupSelectionScreen(
             )
         },
         floatingActionButton = {
-            FloatingActionButton(
-                onClick = onCreateGroup,
-                containerColor = MaterialTheme.colorScheme.tertiary
-            ) {
-                Icon(Icons.Default.Add, contentDescription = "Create Group", tint = MaterialTheme.colorScheme.onTertiary)
+            if (isAdmin) {
+                FloatingActionButton(
+                    onClick = onCreateGroup,
+                    containerColor = MaterialTheme.colorScheme.tertiary
+                ) {
+                    Icon(Icons.Default.Add, contentDescription = "Create Group", tint = MaterialTheme.colorScheme.onTertiary)
+                }
             }
         }
     ) {
@@ -75,16 +78,16 @@ fun GroupSelectionScreen(
                 .fillMaxSize()
                 .padding(it)
                 .background(MaterialTheme.colorScheme.background)
+                .padding(16.dp)
         ) {
             if (groups.isEmpty()) {
-                EmptyState()
+                EmptyState(isAdmin)
             } else {
-                LazyColumn(
-                    modifier = Modifier.padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
+                val headerText = if (isAdmin) "Select a group to manage:" else "Select a group to view:"
+                Text(headerText, style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(bottom = 16.dp))
+                LazyColumn(verticalArrangement = Arrangement.spacedBy(16.dp)) {
                     items(groups) { group ->
-                        GroupItem(group = group, onClick = { onGroupSelected(group.id) }, onEdit = { onEditGroup(group.id) })
+                        GroupItem(group = group, onClick = { onGroupSelected(group.id) }, onEdit = { onEditGroup(group.id) }, isAdmin = isAdmin)
                     }
                 }
             }
@@ -93,11 +96,10 @@ fun GroupSelectionScreen(
 }
 
 @Composable
-private fun EmptyState() {
+private fun EmptyState(isAdmin: Boolean) {
     Column(
         modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp),
+            .fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
@@ -108,14 +110,16 @@ private fun EmptyState() {
             tint = MaterialTheme.colorScheme.secondary.copy(alpha = 0.6f)
         )
         Spacer(modifier = Modifier.height(24.dp))
+        val title = if (isAdmin) "Welcome, Admin!" else "Welcome!"
         Text(
-            text = "Welcome, Admin!",
+            text = title,
             style = MaterialTheme.typography.headlineSmall,
             fontWeight = FontWeight.Bold
         )
         Spacer(modifier = Modifier.height(8.dp))
+        val message = if (isAdmin) "Create a new savings group to get started." else "You are not yet part of any savings group."
         Text(
-            text = "No groups found. Create a new savings group to get started.",
+            text = message,
             style = MaterialTheme.typography.bodyLarge,
             textAlign = TextAlign.Center,
             modifier = Modifier.padding(horizontal = 32.dp)
@@ -124,7 +128,7 @@ private fun EmptyState() {
 }
 
 @Composable
-private fun GroupItem(group: Group, onClick: () -> Unit, onEdit: () -> Unit) {
+private fun GroupItem(group: Group, onClick: () -> Unit, onEdit: () -> Unit, isAdmin: Boolean) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -142,11 +146,13 @@ private fun GroupItem(group: Group, onClick: () -> Unit, onEdit: () -> Unit) {
                 modifier = Modifier.size(40.dp),
                 tint = MaterialTheme.colorScheme.primary
             )
-            Spacer(modifier = Modifier.padding(horizontal = 8.dp))
-            Text(group.name, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+            Spacer(modifier = Modifier.padding(horizontal = 16.dp))
+            Text(group.name, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
             Spacer(modifier = Modifier.weight(1f))
-            IconButton(onClick = onEdit) {
-                Icon(Icons.Default.Edit, contentDescription = "Edit Group", tint = MaterialTheme.colorScheme.secondary)
+            if (isAdmin) {
+                IconButton(onClick = onEdit) {
+                    Icon(Icons.Default.Edit, contentDescription = "Edit Group", tint = MaterialTheme.colorScheme.secondary)
+                }
             }
         }
     }

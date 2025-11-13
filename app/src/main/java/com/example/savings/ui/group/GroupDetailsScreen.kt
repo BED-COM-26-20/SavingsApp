@@ -41,7 +41,8 @@ fun GroupDetailsScreen(
     onNavigateBack: () -> Unit,
     onMembersClicked: () -> Unit,
     onTransactionsClicked: () -> Unit,
-    onReportsClicked: () -> Unit
+    onReportsClicked: () -> Unit,
+    isAdmin: Boolean
 ) {
     Scaffold(
         topBar = {
@@ -65,8 +66,10 @@ fun GroupDetailsScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             DetailButton(icon = Icons.Default.Groups, text = "Members", onClick = onMembersClicked)
-            DetailButton(icon = Icons.Default.SyncAlt, text = "Transactions", onClick = onTransactionsClicked)
-            DetailButton(icon = Icons.Default.Assessment, text = "Reports", onClick = onReportsClicked)
+            if (isAdmin) {
+                DetailButton(icon = Icons.Default.SyncAlt, text = "Transactions", onClick = onTransactionsClicked)
+                DetailButton(icon = Icons.Default.Assessment, text = "Reports", onClick = onReportsClicked)
+            }
         }
     }
 }

@@ -1,18 +1,22 @@
 package com.example.savings.ui.auth
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -34,15 +38,24 @@ import androidx.compose.ui.unit.dp
 
 @Composable
 fun RegistrationScreen(onRegister: () -> Unit) {
+    var name by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var confirmPassword by remember { mutableStateOf("") }
+    var nameError by remember { mutableStateOf<String?>(null) }
     var emailError by remember { mutableStateOf<String?>(null) }
     var passwordError by remember { mutableStateOf<String?>(null) }
 
     fun validate(): Boolean {
         var isValid = true
-        if (email.isEmpty()) {
+        if (name.isBlank()) {
+            nameError = "Name cannot be empty"
+            isValid = false
+        } else {
+            nameError = null
+        }
+
+        if (email.isBlank()) {
             emailError = "Email cannot be empty"
             isValid = false
         } else if (!android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
@@ -52,7 +65,7 @@ fun RegistrationScreen(onRegister: () -> Unit) {
             emailError = null
         }
 
-        if (password.isEmpty()) {
+        if (password.isBlank()) {
             passwordError = "Password cannot be empty"
             isValid = false
         } else if (password != confirmPassword) {
@@ -80,13 +93,24 @@ fun RegistrationScreen(onRegister: () -> Unit) {
                 modifier = Modifier.padding(24.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Text("Create Account", style = MaterialTheme.typography.headlineMedium, color = MaterialTheme.colorScheme.primary)
+                Text("Create Your Account", style = MaterialTheme.typography.headlineMedium, color = MaterialTheme.colorScheme.primary)
                 Spacer(modifier = Modifier.height(24.dp))
+
+                OutlinedTextField(
+                    value = name,
+                    onValueChange = { name = it; nameError = null },
+                    label = { Text("Full Name") },
+                    leadingIcon = { Icon(Icons.Default.Person, contentDescription = null) },
+                    isError = nameError != null,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                nameError?.let { Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall) }
+                Spacer(modifier = Modifier.height(16.dp))
 
                 OutlinedTextField(
                     value = email,
                     onValueChange = { email = it; emailError = null },
-                    label = { Text("Email") },
+                    label = { Text("Email Address") },
                     leadingIcon = { Icon(Icons.Default.Email, contentDescription = null) },
                     isError = emailError != null,
                     modifier = Modifier.fillMaxWidth(),
@@ -118,8 +142,15 @@ fun RegistrationScreen(onRegister: () -> Unit) {
                 passwordError?.let { Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall) }
                 Spacer(modifier = Modifier.height(24.dp))
 
-                Button(onClick = { if (validate()) onRegister() }, modifier = Modifier.fillMaxWidth()) {
-                    Text("Register")
+                Button(
+                    onClick = { if (validate()) onRegister() }, 
+                    modifier = Modifier.fillMaxWidth().height(50.dp)
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center) {
+                        Icon(Icons.Default.Person, contentDescription = "Register")
+                        Spacer(Modifier.size(8.dp))
+                        Text("Register", style = MaterialTheme.typography.titleMedium)
+                    }
                 }
             }
         }

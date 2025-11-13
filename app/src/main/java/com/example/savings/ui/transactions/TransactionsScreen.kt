@@ -49,13 +49,10 @@ fun TransactionsScreen(
     transactions: List<Transaction>,
     onNavigateBack: () -> Unit
 ) {
-    val savingsTransactions = transactions.filter { it.type == TransactionType.DEPOSIT }
-    val loanTransactions = transactions.filter { it.type == TransactionType.LOAN || it.type == TransactionType.LOAN_REPAYMENT }
-
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Transactions") },
+                title = { Text("All Transactions") },
                 navigationIcon = { IconButton(onClick = onNavigateBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back") } },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.primary,
@@ -74,23 +71,8 @@ fun TransactionsScreen(
             if (transactions.isEmpty()) {
                 EmptyState()
             } else {
-                LazyColumn(modifier = Modifier.padding(16.dp)) {
-                    item {
-                        TransactionSectionHeader(
-                            title = "Savings",
-                            total = savingsTransactions.sumOf { it.amount })
-                    }
-                    items(savingsTransactions) { transaction ->
-                        TransactionItem(transaction)
-                    }
-                    item {
-                        Spacer(modifier = Modifier.height(16.dp))
-                        TransactionSectionHeader(
-                            title = "Loans",
-                            total = loanTransactions.filter { it.type == TransactionType.LOAN }.sumOf { it.amount } - loanTransactions.filter { it.type == TransactionType.LOAN_REPAYMENT }.sumOf { it.amount }
-                        )
-                    }
-                    items(loanTransactions) { transaction ->
+                LazyColumn(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    items(transactions) { transaction ->
                         TransactionItem(transaction)
                     }
                 }
@@ -101,38 +83,24 @@ fun TransactionsScreen(
 
 @Composable
 fun EmptyState() {
-    Column(
+    Box(
         modifier = Modifier
             .fillMaxSize()
             .padding(16.dp),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
+        contentAlignment = Alignment.Center
     ) {
-        Icon(Icons.Default.Inbox, contentDescription = "No transactions", modifier = Modifier.size(80.dp), tint = MaterialTheme.colorScheme.secondary)
-        Spacer(modifier = Modifier.padding(8.dp))
-        Text("No transactions yet.", style = MaterialTheme.typography.headlineSmall)
-        Text("Add a transaction to see it listed here.", style = MaterialTheme.typography.bodyLarge, color = Color.Gray)
-    }
-}
-
-@Composable
-fun TransactionSectionHeader(title: String, total: Double) {
-    Column {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(text = title, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
-            Text(text = "MK${String.format("%,.2f", total)}", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Icon(Icons.Default.Inbox, contentDescription = "No transactions", modifier = Modifier.size(80.dp), tint = MaterialTheme.colorScheme.secondary)
+            Spacer(modifier = Modifier.padding(8.dp))
+            Text("No transactions yet.", style = MaterialTheme.typography.headlineSmall)
+            Text("Add a transaction to see it listed here.", style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f))
         }
-        Divider(modifier = Modifier.padding(vertical = 8.dp))
     }
 }
 
 @Composable
 fun TransactionItem(transaction: Transaction) {
-    Card(elevation = CardDefaults.cardElevation(2.dp)) {
+    Card(elevation = CardDefaults.cardElevation(2.dp), modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -152,15 +120,15 @@ fun TransactionItem(transaction: Transaction) {
             ) {
                 Icon(icon, contentDescription = "Transaction type", tint = color)
             }
-            Spacer(modifier = Modifier.padding(horizontal = 8.dp))
+            Spacer(modifier = Modifier.padding(horizontal = 16.dp))
             Column(modifier = Modifier.weight(1f)) {
-                Text(transaction.description, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                Text(SimpleDateFormat("MMM dd, yyyy", Locale.getDefault()).format(Date(transaction.date)), style = MaterialTheme.typography.bodyMedium, color = Color.Gray)
+                Text(transaction.description, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.SemiBold)
+                Text(SimpleDateFormat("MMM dd, yyyy", Locale.getDefault()).format(Date(transaction.date)), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f))
             }
             Text(
                 text = "${if (transaction.type == TransactionType.DEPOSIT || transaction.type == TransactionType.LOAN_REPAYMENT) "+" else "-"}MK${String.format("%,.2f", transaction.amount)}",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold,
+                style = MaterialTheme.typography.bodyLarge,
+                fontWeight = FontWeight.Bold,
                 color = color
             )
         }

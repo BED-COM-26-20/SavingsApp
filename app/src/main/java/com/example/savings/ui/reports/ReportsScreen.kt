@@ -14,6 +14,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Download
@@ -41,6 +43,7 @@ import androidx.compose.ui.unit.dp
 import com.example.savings.data.models.Member
 import com.example.savings.data.models.Transaction
 import com.example.savings.data.models.TransactionType
+import com.example.savings.ui.transactions.TransactionItem
 
 data class TopSaver(val rank: Int, val name: String, val amount: Double)
 
@@ -83,78 +86,109 @@ fun ReportsScreen(
                     navigationIconContentColor = MaterialTheme.colorScheme.onPrimary
                 )
             )
-        }
-    ) { paddingValues ->
-        Column(modifier = Modifier.padding(paddingValues).fillMaxSize().background(MaterialTheme.colorScheme.background).padding(16.dp)) {
-            Card(modifier = Modifier.fillMaxWidth(), elevation = CardDefaults.cardElevation(4.dp)) {
-                Column(modifier = Modifier.padding(16.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text("Financial Overview", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-                    Spacer(modifier = Modifier.height(16.dp))
-                    BoxWithConstraints {
-                        val isSmallScreen = maxWidth < 600.dp
-                        if (isSmallScreen) {
-                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                PieChart(totalSavings, totalLoans, modifier = Modifier.size(150.dp))
-                                Spacer(modifier = Modifier.height(16.dp))
-                                PieChartLegend(
-                                    savings = totalSavings,
-                                    loans = totalLoans,
-                                    savingsColor = MaterialTheme.colorScheme.primary,
-                                    loansColor = MaterialTheme.colorScheme.secondary
-                                )
-                            }
-                        } else {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                PieChart(totalSavings, totalLoans, modifier = Modifier.size(200.dp))
-                                Spacer(modifier = Modifier.width(32.dp))
-                                PieChartLegend(
-                                    savings = totalSavings,
-                                    loans = totalLoans,
-                                    savingsColor = MaterialTheme.colorScheme.primary,
-                                    loansColor = MaterialTheme.colorScheme.secondary
-                                )
-                            }
-                        }
-                    }
-                }
-            }
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Card(modifier = Modifier.fillMaxWidth(), elevation = CardDefaults.cardElevation(4.dp)) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Text("Top Savers", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-                    Spacer(modifier = Modifier.height(8.dp))
-                    if (topSavers.isEmpty()) {
-                        Text("No savings data available to rank top savers.", style = MaterialTheme.typography.bodyLarge, color = Color.Gray)
-                    } else {
-                        topSavers.forEach { saver ->
-                            TopSaverItem(
-                                rank = saver.rank,
-                                name = saver.name,
-                                amount = "MWK ${String.format("%,.2f", saver.amount)}"
-                            )
-                        }
-                    }
-                }
-            }
-
-            Spacer(modifier = Modifier.weight(1f))
-
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
-                Button(onClick = onExport) { 
+        },
+        bottomBar = {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                horizontalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                Button(
+                    onClick = onExport,
+                    modifier = Modifier.weight(1f)
+                ) { 
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(Icons.Default.Download, contentDescription = null, modifier = Modifier.size(20.dp))
                         Spacer(modifier = Modifier.padding(horizontal = 4.dp))
                         Text("Export") 
                     }
                 }
-                Button(onClick = onShare) { 
+                Button(
+                    onClick = onShare,
+                    modifier = Modifier.weight(1f)
+                ) { 
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(Icons.Default.Share, contentDescription = null, modifier = Modifier.size(20.dp))
                         Spacer(modifier = Modifier.padding(horizontal = 4.dp))
                         Text("Share") 
                     }
                 }
+            }
+        }
+    ) { paddingValues ->
+        LazyColumn(modifier = Modifier.padding(paddingValues).fillMaxSize().background(MaterialTheme.colorScheme.background).padding(16.dp)) {
+            item {
+                Card(modifier = Modifier.fillMaxWidth(), elevation = CardDefaults.cardElevation(4.dp)) {
+                    Column(modifier = Modifier.padding(16.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text("Financial Overview", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                        Spacer(modifier = Modifier.height(16.dp))
+                        BoxWithConstraints {
+                            val isSmallScreen = maxWidth < 600.dp
+                            if (isSmallScreen) {
+                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                    PieChart(totalSavings, totalLoans, modifier = Modifier.size(150.dp))
+                                    Spacer(modifier = Modifier.height(16.dp))
+                                    PieChartLegend(
+                                        savings = totalSavings,
+                                        loans = totalLoans,
+                                        savingsColor = MaterialTheme.colorScheme.primary,
+                                        loansColor = MaterialTheme.colorScheme.secondary
+                                    )
+                                }
+                            } else {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    PieChart(totalSavings, totalLoans, modifier = Modifier.size(200.dp))
+                                    Spacer(modifier = Modifier.width(32.dp))
+                                    PieChartLegend(
+                                        savings = totalSavings,
+                                        loans = totalLoans,
+                                        savingsColor = MaterialTheme.colorScheme.primary,
+                                        loansColor = MaterialTheme.colorScheme.secondary
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            item {
+                Spacer(modifier = Modifier.height(16.dp))
+            }
+
+            item {
+                Card(modifier = Modifier.fillMaxWidth(), elevation = CardDefaults.cardElevation(4.dp)) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Text("Top Savers", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                        Spacer(modifier = Modifier.height(8.dp))
+                        if (topSavers.isEmpty()) {
+                            Text("No savings data available to rank top savers.", style = MaterialTheme.typography.bodyLarge, color = Color.Gray)
+                        } else {
+                            topSavers.forEach { saver ->
+                                TopSaverItem(
+                                    rank = saver.rank,
+                                    name = saver.name,
+                                    amount = "MWK ${String.format("%,.2f", saver.amount)}"
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+            item {
+                Spacer(modifier = Modifier.height(16.dp))
+            }
+            item {
+                Card(modifier = Modifier.fillMaxWidth(), elevation = CardDefaults.cardElevation(4.dp)) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Text("All Transactions", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                        Spacer(modifier = Modifier.height(8.dp))
+                    }
+                }
+            }
+
+            items(transactions) { transaction ->
+                TransactionItem(transaction)
             }
         }
     }

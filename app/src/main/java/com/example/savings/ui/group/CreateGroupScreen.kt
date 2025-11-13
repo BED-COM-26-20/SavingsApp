@@ -4,11 +4,13 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -97,9 +99,11 @@ fun CreateGroupScreen(
                         enabled = groupName.isNotBlank()
 
                     ) {
-                        Icon(Icons.Default.Save, contentDescription = null)
-                        Spacer(modifier = Modifier.padding(horizontal = 4.dp))
-                        Text("Create Group", style = MaterialTheme.typography.titleMedium)
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.Default.Save, contentDescription = "Create Group")
+                            Spacer(Modifier.size(8.dp))
+                            Text("Create Group", style = MaterialTheme.typography.titleMedium)
+                        } 
                     }
                 }
             }

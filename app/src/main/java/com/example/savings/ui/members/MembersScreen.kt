@@ -20,6 +20,8 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
@@ -39,8 +41,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.example.savings.data.models.Member
 
@@ -50,7 +52,8 @@ fun MembersScreen(
     members: List<Member>,
     onMemberClicked: (Member) -> Unit,
     onAddMemberClicked: () -> Unit,
-    onNavigateBack: () -> Unit
+    onNavigateBack: () -> Unit,
+    isAdmin: Boolean
 ) {
     var searchQuery by remember { mutableStateOf("") }
     val filteredMembers = members.filter { it.name.contains(searchQuery, ignoreCase = true) }
@@ -68,8 +71,10 @@ fun MembersScreen(
             )
         },
         floatingActionButton = {
-            FloatingActionButton(onClick = onAddMemberClicked) {
-                Icon(Icons.Default.Add, contentDescription = "Add Member")
+            if (isAdmin) {
+                FloatingActionButton(onClick = onAddMemberClicked) {
+                    Icon(Icons.Default.Add, contentDescription = "Add Member")
+                }
             }
         }
     ) {
@@ -78,15 +83,20 @@ fun MembersScreen(
                 .padding(it)
                 .fillMaxSize()
                 .background(MaterialTheme.colorScheme.background)
-                .padding(horizontal = 16.dp)
+                .padding(16.dp)
         ) {
             SearchBar(searchQuery, onQueryChanged = { searchQuery = it })
             Spacer(modifier = Modifier.height(16.dp))
-            Text("Members (${filteredMembers.size})", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-            Spacer(modifier = Modifier.height(8.dp))
-            LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                items(filteredMembers) { member ->
-                    MemberListItem(member = member, onClick = { onMemberClicked(member) })
+
+            if (filteredMembers.isEmpty()) {
+                EmptyState(searchQuery)
+            } else {
+                Text("Members (${filteredMembers.size})", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                Spacer(modifier = Modifier.height(8.dp))
+                LazyColumn(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    items(filteredMembers) { member ->
+                        MemberListItem(member = member, onClick = { onMemberClicked(member) })
+                    }
                 }
             }
         }
@@ -106,36 +116,57 @@ fun SearchBar(query: String, onQueryChanged: (String) -> Unit) {
             unfocusedContainerColor = MaterialTheme.colorScheme.surface,
             disabledContainerColor = MaterialTheme.colorScheme.surface,
         ),
-        shape = MaterialTheme.shapes.extraLarge
+        shape = MaterialTheme.shapes.extraLarge,
+        singleLine = true
     )
 }
 
 @Composable
+fun EmptyState(searchQuery: String) {
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = if (searchQuery.isEmpty()) "No members found." else "No results for \"$searchQuery\"",
+            style = MaterialTheme.typography.bodyLarge,
+            textAlign = TextAlign.Center,
+            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+        )
+    }
+}
+
+@Composable
 fun MemberListItem(member: Member, onClick: () -> Unit) {
-    Row(
+    Card(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { onClick() }
-            .padding(vertical = 12.dp),
-        verticalAlignment = Alignment.CenterVertically
+            .clickable { onClick() },
+        elevation = CardDefaults.cardElevation(2.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
     ) {
-        Box(
-            modifier = Modifier
-                .size(48.dp)
-                .clip(CircleShape)
-                .background(MaterialTheme.colorScheme.secondaryContainer),
-            contentAlignment = Alignment.Center
+        Row(
+            modifier = Modifier.padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Icon(Icons.Default.Person, contentDescription = "Member", tint = MaterialTheme.colorScheme.onSecondaryContainer)
-        }
-        Spacer(modifier = Modifier.padding(horizontal = 8.dp))
-        Column(modifier = Modifier.weight(1f)) {
-            Text(member.name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-            Text(member.phone, style = MaterialTheme.typography.bodyMedium, color = Color.Gray)
-        }
-        Column(horizontalAlignment = Alignment.End) {
-            Text("MK${String.format("%,.2f", member.totalSavings)}", style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.SemiBold)
-            Text("Savings", style = MaterialTheme.typography.bodySmall, color = Color.Gray)
+            Box(
+                modifier = Modifier
+                    .size(48.dp)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.secondaryContainer),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(Icons.Default.Person, contentDescription = "Member", tint = MaterialTheme.colorScheme.onSecondaryContainer)
+            }
+            Spacer(modifier = Modifier.padding(horizontal = 8.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(member.name, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                Text(member.phone, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f))
+            }
+            Column(horizontalAlignment = Alignment.End) {
+                Text("MK${String.format("%,.2f", member.totalSavings)}", style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.primary)
+                Text("Savings", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f))
+            }
         }
     }
 }

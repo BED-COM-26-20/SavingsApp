@@ -31,6 +31,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.savings.data.SavingsDatabase
 import com.example.savings.data.models.TransactionType
+import com.example.savings.data.models.UserRole
 import com.example.savings.ui.auth.ForgotPasswordScreen
 import com.example.savings.ui.auth.LoginScreen
 import com.example.savings.ui.auth.RegistrationScreen
@@ -41,6 +42,7 @@ import com.example.savings.ui.group.GroupSelectionScreen
 import com.example.savings.ui.group.GroupViewModel
 import com.example.savings.ui.group.GroupViewModelFactory
 import com.example.savings.ui.landing.LandingScreen
+import com.example.savings.ui.main.MainScreen
 import com.example.savings.ui.members.AddMemberScreen
 import com.example.savings.ui.members.MemberViewModel
 import com.example.savings.ui.members.MemberViewModelFactory
@@ -79,6 +81,7 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             var isDarkMode by remember { mutableStateOf(false) }
+            var currentUserRole by remember { mutableStateOf(UserRole.ADMIN) } // Placeholder for user role
 
             SavingsTheme(darkTheme = isDarkMode) {
                 val navController = rememberNavController()
@@ -119,7 +122,10 @@ class MainActivity : ComponentActivity() {
                         }
                         composable("login") {
                             LoginScreen(
-                                onLogin = { navController.navigate(AppScreen.Home.route) { popUpTo("login") { inclusive = true } } },
+                                onLogin = { userRole -> 
+                                    currentUserRole = userRole
+                                    navController.navigate(AppScreen.Home.route) { popUpTo("login") { inclusive = true } } 
+                                },
                                 onRegister = { navController.navigate("register") },
                                 onForgotPassword = { navController.navigate("forgotPassword") }
                             )
@@ -133,14 +139,12 @@ class MainActivity : ComponentActivity() {
                             ForgotPasswordScreen(onNavigateBack = { navController.popBackStack() }, onResetPassword = {})
                         }
                         composable(AppScreen.Home.route) {
-                            GroupSelectionScreen(
-                                groups = groupViewModel.groups.collectAsState(initial = emptyList()).value,
-                                onGroupSelected = { groupId ->
-                                    navController.navigate("groupDetails/$groupId")
-                                },
-                                onCreateGroup = { navController.navigate("createGroup") },
-                                onNotificationsClicked = { navController.navigate("notifications") },
-                                onEditGroup = { groupId -> navController.navigate("editGroup/$groupId") }
+                            MainScreen(
+                                userRole = currentUserRole,
+                                navController = navController,
+                                groupViewModel = groupViewModel,
+                                memberViewModel = memberViewModel,
+                                transactionViewModel = transactionViewModel
                             )
                         }
                         composable(AppScreen.Profile.route) {
@@ -195,7 +199,8 @@ class MainActivity : ComponentActivity() {
                                 onNavigateBack = { navController.popBackStack() },
                                 onMembersClicked = { navController.navigate("members/$groupId") },
                                 onTransactionsClicked = { navController.navigate("transactions/$groupId") },
-                                onReportsClicked = { navController.navigate("reports/$groupId") }
+                                onReportsClicked = { navController.navigate("reports/$groupId") },
+                                isAdmin = currentUserRole == UserRole.ADMIN
                             )
                         }
                         composable(
@@ -208,7 +213,8 @@ class MainActivity : ComponentActivity() {
                                 members = members,
                                 onMemberClicked = { member -> navController.navigate("memberDetails/${member.id}") },
                                 onAddMemberClicked = { navController.navigate("addMember/$groupId") },
-                                onNavigateBack = { navController.popBackStack() }
+                                onNavigateBack = { navController.popBackStack() },
+                                isAdmin = currentUserRole == UserRole.ADMIN
                             )
                         }
                         composable(
