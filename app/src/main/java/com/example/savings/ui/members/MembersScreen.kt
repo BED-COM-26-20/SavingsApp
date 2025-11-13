@@ -165,6 +165,7 @@ fun MemberListItem(member: Member, onClick: () -> Unit) {
             }
             Column(horizontalAlignment = Alignment.End) {
                 Text("MK${String.format("%,.2f", member.totalSavings)}", style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.primary)
+                Spacer(modifier = Modifier.height(4.dp))
                 Text("Savings", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f))
             }
         }

@@ -271,7 +271,7 @@ class MainActivity : ComponentActivity() {
                                     loanTransactions = loanTransactions,
                                     onNavigateBack = { navController.popBackStack() },
                                     onAddTransaction = { transactionType ->
-                                        navController.navigate("addTransaction/$transactionType/$memberId")
+                                        navController.navigate("addTransaction/${transactionType.name}/$memberId")
                                     }
                                 )
                             }

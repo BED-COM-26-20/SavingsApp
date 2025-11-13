@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalMaterial3Api::class)
+
 package com.example.savings.ui.members.details
 
 import androidx.compose.foundation.background
@@ -12,6 +14,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -29,12 +32,15 @@ import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.PrimaryTabRow
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -48,11 +54,8 @@ import androidx.compose.ui.unit.dp
 import com.example.savings.data.models.Member
 import com.example.savings.data.models.Transaction
 import com.example.savings.data.models.TransactionType
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
+import com.example.savings.ui.transactions.TransactionListItem
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MemberDetailsScreen(
     member: Member,
@@ -62,6 +65,8 @@ fun MemberDetailsScreen(
     onAddTransaction: (TransactionType) -> Unit
 ) {
     var showMenu by remember { mutableStateOf(false) }
+    var selectedTabIndex by remember { mutableIntStateOf(0) }
+    val tabs = listOf("Savings", "Loans")
 
     Scaffold(
         topBar = {
@@ -82,24 +87,22 @@ fun MemberDetailsScreen(
         }
     ) {
         Box(modifier = Modifier.padding(it)) {
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(MaterialTheme.colorScheme.background)
-                    .padding(16.dp)
-            ) {
-                item {
-                    ProfileHeader(member)
-                    Spacer(modifier = Modifier.height(24.dp))
-                    FinancialSummary(savingsTransactions, loanTransactions)
-                    Spacer(modifier = Modifier.height(24.dp))
+            Column(modifier = Modifier.fillMaxSize()) {
+                ProfileHeader(member)
+                Spacer(modifier = Modifier.height(24.dp))
+
+                PrimaryTabRow(selectedTabIndex = selectedTabIndex) {
+                    tabs.forEachIndexed { index, title ->
+                        Tab(
+                            selected = selectedTabIndex == index,
+                            onClick = { selectedTabIndex = index },
+                            text = { Text(text = title) }
+                        )
+                    }
                 }
-                item {
-                    TransactionHistory(title = "Savings History", transactions = savingsTransactions)
-                    Spacer(modifier = Modifier.height(24.dp))
-                }
-                item {
-                    TransactionHistory(title = "Loan History", transactions = loanTransactions)
+                when (selectedTabIndex) {
+                    0 -> SavingsTab(savingsTransactions)
+                    1 -> LoansTab(loanTransactions)
                 }
             }
             DropdownMenu(
@@ -115,8 +118,51 @@ fun MemberDetailsScreen(
 }
 
 @Composable
+fun SavingsTab(transactions: List<Transaction>) {
+    val totalSavings = transactions.sumOf { it.amount }
+    LazyColumn(modifier = Modifier.padding(16.dp)) {
+        item {
+            FinancialSummaryCard("Total Savings", "MK${String.format("%,.2f", totalSavings)}", Icons.Default.ArrowUpward, MaterialTheme.colorScheme.primary)
+            Spacer(modifier = Modifier.height(16.dp))
+        }
+        items(transactions) { transaction ->
+            TransactionListItem(transaction)
+        }
+    }
+}
+
+@Composable
+fun LoansTab(transactions: List<Transaction>) {
+    val totalLoans = transactions.filter { it.type == TransactionType.LOAN }.sumOf { it.amount }
+    val totalRepayments = transactions.filter { it.type == TransactionType.LOAN_REPAYMENT }.sumOf { it.amount }
+    val outstandingLoan = totalLoans - totalRepayments
+
+    LazyColumn(modifier = Modifier.padding(16.dp)) {
+        item {
+            FinancialSummaryCard("Outstanding Loan", "MK${String.format("%,.2f", outstandingLoan)}", Icons.Default.ArrowDownward, MaterialTheme.colorScheme.error)
+            Spacer(modifier = Modifier.height(16.dp))
+        }
+        items(transactions) { transaction ->
+            TransactionListItem(transaction)
+        }
+    }
+}
+
+@Composable
+fun FinancialSummaryCard(title: String, amount: String, icon: ImageVector, color: Color) {
+    Card(elevation = CardDefaults.cardElevation(4.dp), modifier = Modifier.fillMaxWidth()) {
+        Column(modifier = Modifier.padding(16.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+            Icon(icon, contentDescription = null, tint = color, modifier = Modifier.size(32.dp))
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+            Text(amount, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, color = color)
+        }
+    }
+}
+
+@Composable
 fun ProfileHeader(member: Member) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth().padding(16.dp)) {
         Box(
             modifier = Modifier
                 .size(100.dp)
@@ -128,83 +174,6 @@ fun ProfileHeader(member: Member) {
         }
         Spacer(modifier = Modifier.height(16.dp))
         Text(member.name, style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
-        Text(member.phone, style = MaterialTheme.typography.bodyLarge, color = Color.Gray)
-    }
-}
-
-@Composable
-fun FinancialSummary(savings: List<Transaction>, loans: List<Transaction>) {
-    val totalSavings = savings.sumOf { it.amount }
-    val totalLoans = loans.filter { it.type == TransactionType.LOAN }.sumOf { it.amount }
-
-    Card(elevation = CardDefaults.cardElevation(4.dp), modifier = Modifier.fillMaxWidth()) {
-        Row(modifier = Modifier.padding(16.dp), horizontalArrangement = Arrangement.SpaceAround, verticalAlignment = Alignment.CenterVertically) {
-            StatItem("Savings", "MK${String.format("%,.2f", totalSavings)}", Icons.Default.ArrowUpward, MaterialTheme.colorScheme.primary)
-            Divider(modifier = Modifier.height(60.dp).padding(horizontal = 8.dp).background(Color.Gray))
-            StatItem("Loans", "MK${String.format("%,.2f", totalLoans)}", Icons.Default.ArrowDownward, MaterialTheme.colorScheme.error)
-        }
-    }
-}
-
-@Composable
-fun StatItem(title: String, amount: String, icon: ImageVector, color: Color) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Icon(icon, contentDescription = null, tint = color, modifier = Modifier.size(32.dp))
-        Spacer(modifier = Modifier.height(8.dp))
-        Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-        Text(amount, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, color = color)
-    }
-}
-
-@Composable
-fun TransactionHistory(title: String, transactions: List<Transaction>) {
-    Column {
-        Text(title, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-        Spacer(modifier = Modifier.height(16.dp))
-        if (transactions.isEmpty()) {
-            Text("No transactions yet.", style = MaterialTheme.typography.bodyLarge, color = Color.Gray)
-        } else {
-            Card(elevation = CardDefaults.cardElevation(2.dp), modifier = Modifier.fillMaxWidth()) {
-                Column {
-                    transactions.forEachIndexed { index, transaction ->
-                        TransactionListItem(transaction)
-                        if (index < transactions.size - 1) {
-                            Divider()
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-fun TransactionListItem(transaction: Transaction) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(16.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        val (icon, color) = when (transaction.type) {
-            TransactionType.DEPOSIT, TransactionType.LOAN_REPAYMENT -> Pair(Icons.Default.ArrowUpward, MaterialTheme.colorScheme.primary)
-            TransactionType.LOAN -> Pair(Icons.Default.ArrowDownward, MaterialTheme.colorScheme.error)
-        }
-
-        Box(
-            modifier = Modifier
-                .size(40.dp)
-                .clip(CircleShape)
-                .background(color.copy(alpha = 0.1f)),
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(icon, contentDescription = null, tint = color)
-        }
-        Spacer(modifier = Modifier.padding(horizontal = 16.dp))
-        Column(modifier = Modifier.weight(1f)) {
-            Text(transaction.description, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.SemiBold)
-            Text(SimpleDateFormat("MMM dd, yyyy", Locale.getDefault()).format(Date(transaction.date)), style = MaterialTheme.typography.bodyMedium, color = Color.Gray)
-        }
-        Text("MK${String.format("%,.2f", transaction.amount)}", style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold, color = color)
+        Text(member.phone, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f))
     }
 }
