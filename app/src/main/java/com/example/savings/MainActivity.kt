@@ -47,6 +47,7 @@ import com.example.savings.ui.members.MemberViewModelFactory
 import com.example.savings.ui.members.MembersScreen
 import com.example.savings.ui.members.details.MemberDetailsScreen
 import com.example.savings.ui.notifications.NotificationsScreen
+import com.example.savings.ui.profile.ChangePasswordScreen
 import com.example.savings.ui.profile.EditProfileScreen
 import com.example.savings.ui.profile.ProfileViewModel
 import com.example.savings.ui.profile.ProfileViewModelFactory
@@ -155,6 +156,7 @@ class MainActivity : ComponentActivity() {
                                         popUpTo(AppScreen.Profile.route) { inclusive = true }
                                     }
                                 },
+                                onChangePasswordClicked = { navController.navigate("changePassword") },
                                 profileViewModel = profileViewModel
                             )
                         }
@@ -299,6 +301,12 @@ class MainActivity : ComponentActivity() {
                         }
                         composable("notifications") {
                             NotificationsScreen(onNavigateBack = { navController.popBackStack() }, onMarkAsRead = {}, onDelete = {})
+                        }
+                        composable("changePassword") {
+                            ChangePasswordScreen(
+                                onNavigateBack = { navController.popBackStack() },
+                                profileViewModel = profileViewModel
+                            )
                         }
                     }
                 }

@@ -23,7 +23,6 @@ import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Person
-import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -46,7 +45,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 
@@ -57,6 +55,7 @@ fun EditProfileScreen(
     onToggleDarkMode: (Boolean) -> Unit,
     isDarkMode: Boolean,
     onLogout: () -> Unit,
+    onChangePasswordClicked: () -> Unit,
     profileViewModel: ProfileViewModel = viewModel(factory = ProfileViewModelFactory())
 ) {
     val uiState by profileViewModel.uiState.collectAsState()
@@ -120,43 +119,7 @@ fun EditProfileScreen(
                     SecuritySwitch(title = "Two-Factor Authentication", checked = false, onCheckedChange = {})
                     SecuritySwitch(title = "Biometric Login", checked = false, onCheckedChange = {})
                     ClickableSecurityItem(title = "Login Activity") { /* TODO */ }
-
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Text("Change Password", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    OutlinedTextField(
-                        value = uiState.currentPassword,
-                        onValueChange = { profileViewModel.onCurrentPasswordChange(it) },
-                        label = { Text("Current Password") },
-                        visualTransformation = PasswordVisualTransformation(),
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    OutlinedTextField(
-                        value = uiState.newPassword,
-                        onValueChange = { profileViewModel.onNewPasswordChange(it) },
-                        label = { Text("New Password") },
-                        visualTransformation = PasswordVisualTransformation(),
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    OutlinedTextField(
-                        value = uiState.confirmPassword,
-                        onValueChange = { profileViewModel.onConfirmPasswordChange(it) },
-                        label = { Text("Confirm New Password") },
-                        visualTransformation = PasswordVisualTransformation(),
-                        modifier = Modifier.fillMaxWidth(),
-                        isError = uiState.isPasswordMismatch
-                    )
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Button(
-                        onClick = { /* TODO: Implement password change logic */ },
-                        modifier = Modifier.fillMaxWidth(),
-                        enabled = !uiState.isPasswordMismatch && uiState.currentPassword.isNotEmpty() && uiState.newPassword.isNotEmpty()
-                    ) {
-                        Text("Change Password")
-                    }
+                    ClickableSecurityItem(title = "Change Password", onClick = onChangePasswordClicked)
                 }
             }
             Spacer(modifier = Modifier.height(16.dp))
@@ -179,7 +142,7 @@ fun EditProfileScreen(
                 }
             }
 
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.weight(1f))
             
             Row(
                 modifier = Modifier
