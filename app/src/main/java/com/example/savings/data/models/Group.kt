@@ -5,8 +5,8 @@ import androidx.room.PrimaryKey
 
 @Entity(tableName = "groups")
 data class Group(
-    @PrimaryKey(autoGenerate = true)
-    val id: Int = 0,
+    @PrimaryKey
+    val id: String = "",
     val name: String,
     // These will be calculated dynamically later
     val totalSavings: Double = 0.0,

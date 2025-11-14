@@ -1,4 +1,4 @@
-package com.example.savings.data
+package com.example.savings.data.daos
 
 import androidx.room.Dao
 import androidx.room.Insert
@@ -10,13 +10,13 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface GroupDao {
     @Insert
-    suspend fun insert(group: Group)
+    suspend fun insertAll(vararg groups: Group)
 
     @Update
     suspend fun update(group: Group)
 
     @Query("DELETE FROM groups")
-    suspend fun clear()
+    suspend fun deleteAll()
 
     @Query("SELECT * FROM groups ORDER BY name ASC")
     fun getAllGroups(): Flow<List<Group>>

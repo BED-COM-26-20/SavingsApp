@@ -16,9 +16,9 @@ import androidx.room.PrimaryKey
     ]
 )
 data class Member(
-    @PrimaryKey(autoGenerate = true)
-    val id: Int = 0,
-    val groupId: Int,
+    @PrimaryKey
+    val id: String = "",
+    val groupId: String,
     val name: String,
     val phone: String,
     val totalSavings: Double = 0.0,

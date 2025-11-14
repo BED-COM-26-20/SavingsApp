@@ -22,9 +22,10 @@ enum class TransactionType {
     ]
 )
 data class Transaction(
-    @PrimaryKey(autoGenerate = true)
-    val id: Int = 0,
-    val memberId: Int,
+    @PrimaryKey
+    val id: String = "",
+    val groupId: String,
+    val memberId: String,
     val amount: Double,
     val type: TransactionType,
     val date: Long,
