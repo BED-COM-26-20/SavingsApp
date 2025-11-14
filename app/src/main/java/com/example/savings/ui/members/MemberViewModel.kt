@@ -13,7 +13,7 @@ class MemberViewModel(private val memberDao: MemberDao) : ViewModel() {
         return memberDao.getMembersForGroup(groupId)
     }
 
-    fun getMemberById(memberId: Int): Flow<Member> {
+    fun getMemberById(memberId: Int): Flow<Member?> {
         return memberDao.getMemberById(memberId)
     }
 

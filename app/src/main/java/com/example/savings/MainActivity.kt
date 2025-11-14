@@ -29,9 +29,13 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.example.savings.data.AuthRepository
+import com.example.savings.data.FirebaseDataSource
 import com.example.savings.data.SavingsDatabase
 import com.example.savings.data.models.TransactionType
 import com.example.savings.data.models.UserRole
+import com.example.savings.ui.auth.AuthViewModel
+import com.example.savings.ui.auth.AuthViewModelFactory
 import com.example.savings.ui.auth.ForgotPasswordScreen
 import com.example.savings.ui.auth.LoginScreen
 import com.example.savings.ui.auth.RegistrationScreen
@@ -67,6 +71,10 @@ sealed class AppScreen(val route: String, val label: String, val icon: ImageVect
 
 class MainActivity : ComponentActivity() {
 
+    private val firebaseDataSource = FirebaseDataSource()
+    private val authRepository = AuthRepository(firebaseDataSource)
+    private val authViewModel: AuthViewModel by viewModels { AuthViewModelFactory(authRepository) }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -81,7 +89,7 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             var isDarkMode by remember { mutableStateOf(false) }
-            var currentUserRole by remember { mutableStateOf(UserRole.ADMIN) } // Placeholder for user role
+            val authState by authViewModel.authState.collectAsState()
 
             SavingsTheme(darkTheme = isDarkMode) {
                 val navController = rememberNavController()
@@ -122,25 +130,21 @@ class MainActivity : ComponentActivity() {
                         }
                         composable("login") {
                             LoginScreen(
-                                onLogin = { userRole -> 
-                                    currentUserRole = userRole
-                                    navController.navigate(AppScreen.Home.route) { popUpTo("login") { inclusive = true } } 
-                                },
+                                onLogin = { email, password -> authViewModel.signIn(email, password) },
                                 onRegister = { navController.navigate("register") },
                                 onForgotPassword = { navController.navigate("forgotPassword") }
                             )
                         }
                         composable("register") {
-                            RegistrationScreen(
-                                onRegister = { navController.navigate(AppScreen.Home.route) { popUpTo("login") { inclusive = true } } }
-                            )
+                            RegistrationScreen(onRegister = { email, password -> authViewModel.register(email, password) })
                         }
                         composable("forgotPassword") {
                             ForgotPasswordScreen(onNavigateBack = { navController.popBackStack() }, onResetPassword = {})
                         }
                         composable(AppScreen.Home.route) {
+                            val role = (authState as? com.example.savings.ui.auth.AuthState.SignedIn)?.role ?: UserRole.MEMBER // Default to member
                             MainScreen(
-                                userRole = currentUserRole,
+                                userRole = role,
                                 navController = navController,
                                 groupViewModel = groupViewModel,
                                 memberViewModel = memberViewModel,
@@ -152,14 +156,7 @@ class MainActivity : ComponentActivity() {
                                 onNavigateBack = { navController.navigate(AppScreen.Home.route) },
                                 onToggleDarkMode = { isDarkMode = it },
                                 isDarkMode = isDarkMode,
-                                onLogout = {
-                                    groupViewModel.onLogout()
-                                    memberViewModel.onLogout()
-                                    transactionViewModel.onLogout()
-                                    navController.navigate("login") {
-                                        popUpTo(AppScreen.Profile.route) { inclusive = true }
-                                    }
-                                },
+                                onLogout = { authViewModel.signOut() },
                                 onChangePasswordClicked = { navController.navigate("changePassword") },
                                 profileViewModel = profileViewModel
                             )
@@ -194,13 +191,14 @@ class MainActivity : ComponentActivity() {
                         ) { backStackEntry ->
                             val groupId = backStackEntry.arguments?.getInt("groupId") ?: -1
                             val group by groupViewModel.groups.collectAsState(initial = emptyList())
+                            val role = (authState as? com.example.savings.ui.auth.AuthState.SignedIn)?.role ?: UserRole.MEMBER
                             GroupDetailsScreen(
                                 group = group.find { it.id == groupId },
                                 onNavigateBack = { navController.popBackStack() },
                                 onMembersClicked = { navController.navigate("members/$groupId") },
                                 onTransactionsClicked = { navController.navigate("transactions/$groupId") },
                                 onReportsClicked = { navController.navigate("reports/$groupId") },
-                                isAdmin = currentUserRole == UserRole.ADMIN
+                                isAdmin = role == UserRole.ADMIN
                             )
                         }
                         composable(
@@ -209,12 +207,13 @@ class MainActivity : ComponentActivity() {
                         ) { backStackEntry ->
                             val groupId = backStackEntry.arguments?.getInt("groupId") ?: -1
                             val members by memberViewModel.getMembersForGroup(groupId).collectAsState(initial = emptyList())
+                            val role = (authState as? com.example.savings.ui.auth.AuthState.SignedIn)?.role ?: UserRole.MEMBER
                             MembersScreen(
                                 members = members,
                                 onMemberClicked = { member -> navController.navigate("memberDetails/${member.id}") },
                                 onAddMemberClicked = { navController.navigate("addMember/$groupId") },
                                 onNavigateBack = { navController.popBackStack() },
-                                isAdmin = currentUserRole == UserRole.ADMIN
+                                isAdmin = role == UserRole.ADMIN
                             )
                         }
                         composable(

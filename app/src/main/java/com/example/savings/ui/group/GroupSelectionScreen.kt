@@ -50,7 +50,7 @@ fun GroupSelectionScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(if (isAdmin) "Welcome, Admin!" else "Your Groups") },
+                title = { Text(if (isAdmin) "Admin Dashboard" else "Your Groups") },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.primary,
                     titleContentColor = MaterialTheme.colorScheme.onPrimary

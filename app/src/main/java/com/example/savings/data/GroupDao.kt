@@ -12,12 +12,12 @@ interface GroupDao {
     @Insert
     suspend fun insert(group: Group)
 
-    @Query("SELECT * FROM groups ORDER BY name ASC")
-    fun getAllGroups(): Flow<List<Group>>
+    @Update
+    suspend fun update(group: Group)
 
     @Query("DELETE FROM groups")
     suspend fun clear()
 
-    @Update
-    suspend fun update(group: Group)
+    @Query("SELECT * FROM groups ORDER BY name ASC")
+    fun getAllGroups(): Flow<List<Group>>
 }

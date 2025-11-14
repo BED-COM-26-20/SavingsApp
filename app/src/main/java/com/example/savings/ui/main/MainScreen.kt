@@ -34,15 +34,9 @@ fun MainScreen(
             )
         }
         UserRole.MEMBER -> {
-            GroupSelectionScreen(
-                groups = groups, // In a real app, you would filter this to the member's groups
-                onGroupSelected = { groupId ->
-                    navController.navigate("groupDetails/$groupId")
-                },
-                onCreateGroup = {}, // No-op for members
-                onNotificationsClicked = { navController.navigate("notifications") },
-                onEditGroup = {}, // No-op for members
-                isAdmin = false
+            MemberHomeScreen(
+                memberViewModel = memberViewModel,
+                transactionViewModel = transactionViewModel
             )
         }
     }
