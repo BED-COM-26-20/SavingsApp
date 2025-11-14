@@ -14,6 +14,7 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -30,6 +31,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.savings.data.AuthRepository
+import com.example.savings.data.CachingGroupRepository
 import com.example.savings.data.FirebaseDataSource
 import com.example.savings.data.SavingsDatabase
 import com.example.savings.data.models.TransactionType
@@ -42,7 +44,6 @@ import com.example.savings.ui.auth.RegistrationScreen
 import com.example.savings.ui.group.CreateGroupScreen
 import com.example.savings.ui.group.EditGroupScreen
 import com.example.savings.ui.group.GroupDetailsScreen
-import com.example.savings.ui.group.GroupSelectionScreen
 import com.example.savings.ui.group.GroupViewModel
 import com.example.savings.ui.group.GroupViewModelFactory
 import com.example.savings.ui.landing.LandingScreen
@@ -82,9 +83,11 @@ class MainActivity : ComponentActivity() {
         val memberDao = database.memberDao()
         val transactionDao = database.transactionDao()
         val groupDao = database.groupDao()
+        val groupRepository = CachingGroupRepository(groupDao, firebaseDataSource)
+
         val memberViewModel: MemberViewModel by viewModels { MemberViewModelFactory(memberDao) }
         val transactionViewModel: TransactionViewModel by viewModels { TransactionViewModelFactory(transactionDao) }
-        val groupViewModel: GroupViewModel by viewModels { GroupViewModelFactory(groupDao) }
+        val groupViewModel: GroupViewModel by viewModels { GroupViewModelFactory(groupRepository) }
         val profileViewModel: ProfileViewModel by viewModels { ProfileViewModelFactory() }
 
         setContent {
@@ -93,6 +96,19 @@ class MainActivity : ComponentActivity() {
 
             SavingsTheme(darkTheme = isDarkMode) {
                 val navController = rememberNavController()
+
+                LaunchedEffect(authState) {
+                    if (authState is com.example.savings.ui.auth.AuthState.SignedIn) {
+                        navController.navigate(AppScreen.Home.route) {
+                            popUpTo("login") { inclusive = true }
+                        }
+                    } else if (authState is com.example.savings.ui.auth.AuthState.SignedOut) {
+                        navController.navigate("login") {
+                            popUpTo(AppScreen.Home.route) { inclusive = true }
+                        }
+                    }
+                }
+
                 Scaffold(
                     bottomBar = {
                         val navBackStackEntry by navController.currentBackStackEntryAsState()
@@ -122,8 +138,7 @@ class MainActivity : ComponentActivity() {
                             }
                         }
                     }
-                ) {
-                    innerPadding ->
+                ) { innerPadding ->
                     NavHost(navController = navController, startDestination = "landing", modifier = Modifier.padding(innerPadding)) {
                         composable("landing") {
                             LandingScreen(onGetStarted = { navController.navigate("login") })
@@ -142,7 +157,7 @@ class MainActivity : ComponentActivity() {
                             ForgotPasswordScreen(onNavigateBack = { navController.popBackStack() }, onResetPassword = {})
                         }
                         composable(AppScreen.Home.route) {
-                            val role = (authState as? com.example.savings.ui.auth.AuthState.SignedIn)?.role ?: UserRole.MEMBER // Default to member
+                            val role = (authState as? com.example.savings.ui.auth.AuthState.SignedIn)?.role ?: UserRole.MEMBER
                             MainScreen(
                                 userRole = role,
                                 navController = navController,

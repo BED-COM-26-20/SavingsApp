@@ -37,7 +37,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 
 @Composable
-fun RegistrationScreen(onRegister: () -> Unit) {
+fun RegistrationScreen(onRegister: (email: String, password: String) -> Unit) {
     var name by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
@@ -143,7 +143,7 @@ fun RegistrationScreen(onRegister: () -> Unit) {
                 Spacer(modifier = Modifier.height(24.dp))
 
                 Button(
-                    onClick = { if (validate()) onRegister() }, 
+                    onClick = { if (validate()) onRegister(email, password) }, 
                     modifier = Modifier.fillMaxWidth().height(50.dp)
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center) {

@@ -33,10 +33,9 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
-import com.example.savings.data.models.UserRole
 
 @Composable
-fun LoginScreen(onLogin: (UserRole) -> Unit, onRegister: () -> Unit, onForgotPassword: () -> Unit) {
+fun LoginScreen(onLogin: (email: String, password: String) -> Unit, onRegister: () -> Unit, onForgotPassword: () -> Unit) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var emailError by remember { mutableStateOf<String?>(null) }
@@ -116,9 +115,7 @@ fun LoginScreen(onLogin: (UserRole) -> Unit, onRegister: () -> Unit, onForgotPas
                 Button(
                     onClick = { 
                         if (validate()) {
-                            // Placeholder for role-based login
-                            val role = if (email.startsWith("admin")) UserRole.ADMIN else UserRole.MEMBER
-                            onLogin(role) 
+                            onLogin(email, password)
                         }
                     },
                     modifier = Modifier.fillMaxWidth().height(50.dp)
