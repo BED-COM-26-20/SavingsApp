@@ -41,10 +41,10 @@ import com.example.savings.data.models.Group
 @Composable
 fun GroupSelectionScreen(
     groups: List<Group>,
-    onGroupSelected: (Int) -> Unit,
+    onGroupSelected: (String) -> Unit,
     onCreateGroup: () -> Unit,
     onNotificationsClicked: () -> Unit,
-    onEditGroup: (Int) -> Unit,
+    onEditGroup: (String) -> Unit,
     isAdmin: Boolean
 ) {
     Scaffold(

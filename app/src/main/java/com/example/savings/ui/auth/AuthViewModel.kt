@@ -2,7 +2,6 @@ package com.example.savings.ui.auth
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.savings.data.AuthRepository
 import com.example.savings.data.models.UserRole
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -19,7 +18,7 @@ class AuthViewModel(private val authRepository: AuthRepository) : ViewModel() {
             try {
                 val userId = authRepository.signIn(email, password)
                 // In a real app, you would fetch the user's role from your backend here.
-                _authState.value = AuthState.SignedIn(userId, authRepository.currentUserRole)
+                _authState.value = AuthState.SignedIn(userId, UserRole.MEMBER)
             } catch (e: Exception) {
                 _authState.value = AuthState.Error(e.message ?: "Sign-in failed")
             }

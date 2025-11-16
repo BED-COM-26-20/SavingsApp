@@ -4,11 +4,16 @@ import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import androidx.room.TypeConverters
+import com.example.savings.data.daos.GroupDao
+import com.example.savings.data.daos.MemberDao
+import com.example.savings.data.daos.TransactionDao
 import com.example.savings.data.models.Group
 import com.example.savings.data.models.Member
 import com.example.savings.data.models.Transaction
 
 @Database(entities = [Member::class, Transaction::class, Group::class], version = 3, exportSchema = false)
+@TypeConverters(Converters::class)
 abstract class SavingsDatabase : RoomDatabase() {
 
     abstract fun memberDao(): MemberDao

@@ -1,26 +1,21 @@
 package com.example.savings
 
 import com.example.savings.data.FirebaseDataSource
-import com.example.savings.data.daos.GroupDao
+import com.example.savings.data.GroupRepository
 import com.example.savings.data.models.Group
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.onEach
 
-class CachingGroupRepository(private val groupDao: GroupDao, private val firebaseDataSource: FirebaseDataSource) {
+class GroupRepositoryImpl(private val firebaseDataSource: FirebaseDataSource) : GroupRepository {
 
-    fun getGroups(): Flow<List<Group>> {
-        return firebaseDataSource.getGroups().onEach { groups ->
-            groupDao.deleteAll()
-            groupDao.insertAll(*groups.toTypedArray())
-        }
+    override fun getGroups(): Flow<List<Group>> {
+        return firebaseDataSource.getGroups()
     }
 
-    suspend fun createGroup(group: Group) {
-        firebaseDataSource.createGroup(group)
+    override suspend fun createGroup(groupName: String) {
+        firebaseDataSource.createGroup(Group(name = groupName))
     }
 
-    suspend fun updateGroup(group: Group) {
-        // TODO: Implement update in Firebase
-        groupDao.update(group)
+    override suspend fun updateGroup(group: Group) {
+        firebaseDataSource.updateGroup(group)
     }
 }

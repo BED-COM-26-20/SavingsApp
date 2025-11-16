@@ -6,7 +6,7 @@ import androidx.compose.runtime.getValue
 import androidx.navigation.NavController
 import com.example.savings.data.models.UserRole
 import com.example.savings.ui.group.GroupSelectionScreen
-import com.example.savings.ui.group.GroupViewModel
+import com.example.savings.ui.groups.GroupViewModel
 import com.example.savings.ui.members.MemberViewModel
 import com.example.savings.ui.transactions.TransactionViewModel
 
@@ -36,7 +36,8 @@ fun MainScreen(
         UserRole.MEMBER -> {
             MemberHomeScreen(
                 memberViewModel = memberViewModel,
-                transactionViewModel = transactionViewModel
+                transactionViewModel = transactionViewModel,
+                navController = navController
             )
         }
     }

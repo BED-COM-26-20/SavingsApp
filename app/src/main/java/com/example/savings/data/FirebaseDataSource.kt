@@ -40,7 +40,9 @@ class FirebaseDataSource {
         val listener = object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
                 val groups = snapshot.children.mapNotNull { ds ->
-                    ds.getValue(Group::class.java)?.copy(id = ds.key)
+                    ds.key?.let { key ->
+                        ds.getValue(Group::class.java)?.copy(id = key)
+                    }
                 }
                 trySend(groups)
             }
@@ -55,7 +57,13 @@ class FirebaseDataSource {
 
     suspend fun createGroup(group: Group) {
         val newGroupRef = db.child("groups").push()
-        newGroupRef.setValue(group.copy(id = newGroupRef.key)).await()
+        newGroupRef.key?.let {
+            newGroupRef.setValue(group.copy(id = it)).await()
+        }
+    }
+
+    suspend fun updateGroup(group: Group) {
+        db.child("groups").child(group.id).setValue(group).await()
     }
 
     // --- Members ---
@@ -64,7 +72,9 @@ class FirebaseDataSource {
         val listener = object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
                 val members = snapshot.children.mapNotNull { ds ->
-                    ds.getValue(Member::class.java)?.copy(id = ds.key)
+                    ds.key?.let { key ->
+                        ds.getValue(Member::class.java)?.copy(id = key)
+                    }
                 }
                 trySend(members)
             }
@@ -80,7 +90,9 @@ class FirebaseDataSource {
 
     suspend fun addMember(groupId: String, member: Member) {
         val newMemberRef = db.child("groups").child(groupId).child("members").push()
-        newMemberRef.setValue(member.copy(id = newMemberRef.key)).await()
+        newMemberRef.key?.let {
+            newMemberRef.setValue(member.copy(id = it)).await()
+        }
     }
 
     // --- Transactions ---
@@ -89,7 +101,9 @@ class FirebaseDataSource {
          val listener = object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
                 val transactions = snapshot.children.mapNotNull { ds ->
-                    ds.getValue(Transaction::class.java)?.copy(id = ds.key)
+                    ds.key?.let { key ->
+                        ds.getValue(Transaction::class.java)?.copy(id = key)
+                    }
                 }
                 trySend(transactions)
             }
@@ -104,6 +118,8 @@ class FirebaseDataSource {
 
     suspend fun addTransaction(groupId: String, memberId: String, transaction: Transaction) {
         val newTransactionRef = db.child("groups").child(groupId).child("members").child(memberId).child("transactions").push()
-        newTransactionRef.setValue(transaction.copy(id = newTransactionRef.key)).await()
+        newTransactionRef.key?.let {
+            newTransactionRef.setValue(transaction.copy(id = it)).await()
+        }
     }
 }

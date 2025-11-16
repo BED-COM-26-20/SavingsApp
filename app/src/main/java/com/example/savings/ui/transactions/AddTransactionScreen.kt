@@ -13,6 +13,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.CalendarToday
+import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.MonetizationOn
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.material3.Button
@@ -54,9 +55,10 @@ fun AddTransactionScreen(
     memberName: String,
     transactionType: String,
     onNavigateBack: () -> Unit,
-    onSave: (amount: Double, date: Long, type: TransactionType) -> Unit,
+    onSave: (amount: Double, date: Long, type: TransactionType, description: String) -> Unit,
 ) {
     var amount by remember { mutableStateOf("") }
+    var description by remember { mutableStateOf("") }
     var selectedDate by remember { mutableStateOf(System.currentTimeMillis()) }
     var showDatePicker by remember { mutableStateOf(false) }
     val dateState = rememberDatePickerState(initialSelectedDateMillis = selectedDate)
@@ -97,6 +99,15 @@ fun AddTransactionScreen(
                     )
                     Spacer(modifier = Modifier.height(16.dp))
                     OutlinedTextField(
+                        value = description,
+                        onValueChange = { description = it },
+                        label = { Text("Description") },
+                        leadingIcon = { Icon(Icons.Default.Description, contentDescription = null) },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    OutlinedTextField(
                         value = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(Date(selectedDate)),
                         onValueChange = {},
                         readOnly = true,
@@ -128,7 +139,7 @@ fun AddTransactionScreen(
             Spacer(modifier = Modifier.weight(1f))
 
             Button(
-                onClick = { onSave(amount.toDoubleOrNull() ?: 0.0, selectedDate, selectedTransactionType) },
+                onClick = { onSave(amount.toDoubleOrNull() ?: 0.0, selectedDate, selectedTransactionType, description) },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(50.dp),

@@ -36,6 +36,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavController
 import com.example.savings.data.models.Transaction
 import com.example.savings.data.models.TransactionType
 import com.example.savings.ui.members.MemberViewModel
@@ -45,13 +46,14 @@ import com.example.savings.ui.transactions.TransactionViewModel
 @Composable
 fun MemberHomeScreen(
     memberViewModel: MemberViewModel,
-    transactionViewModel: TransactionViewModel
+    transactionViewModel: TransactionViewModel,
+    navController: NavController
 ) {
     // For now, we\'ll assume a hardcoded member ID. In a real app, this would come from the login session.
-    val memberId = 1 
-    val member by memberViewModel.getMemberById(memberId).collectAsState(initial = null)
-    val savingsTransactions by transactionViewModel.getTransactionsForMember(memberId).collectAsState(initial = emptyList())
-    val loanTransactions by transactionViewModel.getTransactionsForMember(memberId).collectAsState(initial = emptyList())
+    val memberId = "1" 
+    val member by memberViewModel.getMemberById("1", memberId).collectAsState(initial = null)
+    val savingsTransactions by transactionViewModel.getTransactionsForMember("1", memberId).collectAsState(initial = emptyList())
+    val loanTransactions by transactionViewModel.getTransactionsForMember("1", memberId).collectAsState(initial = emptyList())
 
     Scaffold(
         topBar = {
@@ -128,4 +130,3 @@ private fun TransactionHistory(title: String, transactions: List<Transaction>) {
         }
     }
 }
-
