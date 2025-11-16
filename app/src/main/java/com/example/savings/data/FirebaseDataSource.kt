@@ -1,10 +1,8 @@
 package com.example.savings.data
 
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.database.DataSnapshot
-import com.google.firebase.database.DatabaseError
-import com.google.firebase.database.FirebaseDatabase
-import com.google.firebase.database.ValueEventListener
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.ktx.toObjects
 import com.example.savings.data.models.Group
 import com.example.savings.data.models.Member
 import com.example.savings.data.models.Transaction
@@ -16,7 +14,7 @@ import kotlinx.coroutines.tasks.await
 class FirebaseDataSource {
 
     private val auth = FirebaseAuth.getInstance()
-    private val db = FirebaseDatabase.getInstance().reference
+    private val db = FirebaseFirestore.getInstance()
 
     // --- Authentication ---
 
@@ -37,89 +35,67 @@ class FirebaseDataSource {
     // --- Groups ---
 
     fun getGroups(): Flow<List<Group>> = callbackFlow {
-        val listener = object : ValueEventListener {
-            override fun onDataChange(snapshot: DataSnapshot) {
-                val groups = snapshot.children.mapNotNull { ds ->
-                    ds.key?.let { key ->
-                        ds.getValue(Group::class.java)?.copy(id = key)
-                    }
-                }
+        val listener = db.collection("groups").addSnapshotListener { snapshot, error ->
+            if (error != null) {
+                close(error)
+                return@addSnapshotListener
+            }
+            snapshot?.let {
+                val groups = it.toObjects<Group>()
                 trySend(groups)
             }
-
-            override fun onCancelled(error: DatabaseError) {
-                close(error.toException())
-            }
         }
-        db.child("groups").addValueEventListener(listener)
-        awaitClose { db.child("groups").removeEventListener(listener) }
+        awaitClose { listener.remove() }
     }
 
     suspend fun createGroup(group: Group) {
-        val newGroupRef = db.child("groups").push()
-        newGroupRef.key?.let {
-            newGroupRef.setValue(group.copy(id = it)).await()
-        }
+        db.collection("groups").add(group).await()
     }
 
     suspend fun updateGroup(group: Group) {
-        db.child("groups").child(group.id).setValue(group).await()
+        db.collection("groups").document(group.id).set(group).await()
     }
 
     // --- Members ---
 
     fun getMembers(groupId: String): Flow<List<Member>> = callbackFlow {
-        val listener = object : ValueEventListener {
-            override fun onDataChange(snapshot: DataSnapshot) {
-                val members = snapshot.children.mapNotNull { ds ->
-                    ds.key?.let { key ->
-                        ds.getValue(Member::class.java)?.copy(id = key)
-                    }
+        val listener = db.collection("groups").document(groupId).collection("members")
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    close(error)
+                    return@addSnapshotListener
                 }
-                trySend(members)
+                snapshot?.let {
+                    val members = it.toObjects<Member>()
+                    trySend(members)
+                }
             }
-
-            override fun onCancelled(error: DatabaseError) {
-                close(error.toException())
-            }
-        }
-        db.child("groups").child(groupId).child("members").addValueEventListener(listener)
-        awaitClose { db.child("groups").child(groupId).child("members").removeEventListener(listener) }
+        awaitClose { listener.remove() }
     }
 
-
     suspend fun addMember(groupId: String, member: Member) {
-        val newMemberRef = db.child("groups").child(groupId).child("members").push()
-        newMemberRef.key?.let {
-            newMemberRef.setValue(member.copy(id = it)).await()
-        }
+        db.collection("groups").document(groupId).collection("members").add(member).await()
     }
 
     // --- Transactions ---
 
     fun getTransactions(groupId: String, memberId: String): Flow<List<Transaction>> = callbackFlow {
-         val listener = object : ValueEventListener {
-            override fun onDataChange(snapshot: DataSnapshot) {
-                val transactions = snapshot.children.mapNotNull { ds ->
-                    ds.key?.let { key ->
-                        ds.getValue(Transaction::class.java)?.copy(id = key)
-                    }
+        val listener = db.collection("groups").document(groupId).collection("members")
+            .document(memberId).collection("transactions").addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    close(error)
+                    return@addSnapshotListener
                 }
-                trySend(transactions)
+                snapshot?.let {
+                    val transactions = it.toObjects<Transaction>()
+                    trySend(transactions)
+                }
             }
-
-            override fun onCancelled(error: DatabaseError) {
-                close(error.toException())
-            }
-        }
-        db.child("groups").child(groupId).child("members").child(memberId).child("transactions").addValueEventListener(listener)
-        awaitClose {  db.child("groups").child(groupId).child("members").child(memberId).child("transactions").removeEventListener(listener) }
+        awaitClose { listener.remove() }
     }
 
     suspend fun addTransaction(groupId: String, memberId: String, transaction: Transaction) {
-        val newTransactionRef = db.child("groups").child(groupId).child("members").child(memberId).child("transactions").push()
-        newTransactionRef.key?.let {
-            newTransactionRef.setValue(transaction.copy(id = it)).await()
-        }
+        db.collection("groups").document(groupId).collection("members")
+            .document(memberId).collection("transactions").add(transaction).await()
     }
 }
